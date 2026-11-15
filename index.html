@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Break In, Lock It Down | Learn Node on Node (practice copy)</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="learn-node.css">
+<!--
+  APC 440 Module 13 Show What You Know: Break In, Lock It Down.
+  A practice copy of the students' Learn Node on Node site. Real SQL runs in this
+  browser tab with sql.js (SQLite compiled to WebAssembly, MIT license, see
+  LICENSE-sql.js.txt). Nothing is sent to any server.
+  Accessibility: keyboard only works everywhere, results use aria-live, text
+  contrast is 5:1 or better, and no meaning is carried by color alone.
+-->
+<style>
+.banner{background:#fff4e5;color:#6b3600;border-bottom:2px solid #6b3600;padding:.6rem 1.25rem;text-align:center;font-weight:600}
+.banner strong{color:#6b3600}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.75rem;margin:1rem 0}
+.tile{display:block;text-align:left;background:#ffffff;color:#16211a;border:2px solid #cfdccc;border-radius:14px;padding:.9rem 1.1rem;font-weight:400}
+.tile:hover{background:#e2efdf;border-color:#1f5f2a}
+.tile .nm{display:block;font-weight:800;font-size:1.05rem;color:#1f5f2a}
+.tile .tp{display:block;color:#3f5045;font-size:.95rem;margin:.2rem 0 .4rem}
+.tile .sc{display:inline-block;font-weight:700;font-size:.9rem;background:#e2efdf;color:#1f5f2a;border-radius:999px;padding:.05rem .6rem}
+.tile .sc.full{background:#1f5f2a;color:#ffffff}
+.btn-alt{background:#ffffff;color:#1f5f2a;border:2px solid #1f5f2a}
+.btn-alt:hover{background:#e2efdf;color:#1f5f2a}
+.row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.prog{color:#3f5045;font-weight:600;margin:0 0 .5rem}
+label{display:block;font-weight:700;margin:.75rem 0 .25rem}
+input[type=text],input[type=number],input[type=password]{font:inherit;width:100%;max-width:26rem;padding:.5rem .7rem;border:2px solid #3f5045;border-radius:8px;color:#16211a;background:#ffffff}
+.err{color:#b42318;font-weight:700;margin:.4rem 0 0;min-height:1.2em}
+.lbl{display:block;font-family:ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace;font-size:.85rem;color:#3f5045;margin:.9rem 0 -.4rem;font-weight:700}
+mark.inj{background:#fff1a8;color:#16211a;font-weight:800;text-decoration:underline;text-decoration-thickness:2px;padding:0 .15em;border-radius:3px}
+.term{background:#2b1414;color:#ffe4e1}
+.opts{display:grid;gap:.5rem;margin:.75rem 0}
+.opt{text-align:left;background:#ffffff;color:#16211a;border:2px solid #3f5045;border-radius:10px;font-weight:600;padding:.6rem .9rem}
+.opt:hover{background:#e2efdf;color:#16211a}
+.opt:disabled{cursor:default;background:#ffffff;color:#16211a}
+.opt.right{border:3px solid #1f5f2a;background:#e2efdf}
+.opt.wrong{border:3px dashed #b42318;background:#fdf3f2}
+.opt .why{display:block;font-size:.9rem;font-weight:800;margin-top:.2rem}
+.fb{border-radius:10px;padding:.75rem 1rem;margin:.5rem 0 1rem}
+.fb.ok{background:#e2efdf;border:2px solid #1f5f2a;color:#16211a}
+.fb.no{background:#fdf3f2;border:2px dashed #b42318;color:#16211a}
+.fb strong.ok{color:#1f5f2a}
+.fb strong.no{color:#b42318}
+.q{border-top:1px solid #cfdccc;padding-top:1rem;margin-top:1rem}
+.q h3{font-size:1.05rem;margin:0 0 .25rem}
+.tasks{list-style:none;padding:0;margin:.5rem 0}
+.tasks li{margin:.3rem 0}
+.flag{background:#1f5f2a;color:#ffffff;font-weight:800;padding:.1rem .45rem;border-radius:6px;font-family:ui-monospace,Consolas,monospace}
+table{border-collapse:collapse;width:100%;margin:.75rem 0;background:#ffffff}
+caption{text-align:left;font-weight:700;padding:0 0 .35rem;color:#16211a}
+th,td{border:1px solid #cfdccc;padding:.45rem .6rem;text-align:left;vertical-align:top;color:#16211a}
+thead th{background:#1f5f2a;color:#ffffff}
+.verdict-bad{color:#b42318;font-weight:800}
+.verdict-good{color:#1f5f2a;font-weight:800}
+.choice{border:2px solid #cfdccc;border-radius:12px;padding:.5rem .9rem;margin:.75rem 0;background:#ffffff}
+.choice.picked-right{border:3px solid #1f5f2a}
+.choice.picked-wrong{border:3px dashed #b42318}
+.choice h3{font-size:1rem;margin:.4rem 0}
+.choice pre{margin:.5rem 0}
+.dash{border:3px solid #1f5f2a;border-radius:14px;padding:1rem 1.25rem;background:#e2efdf;margin:1rem 0}
+.sun{background:#fff4e5;border-radius:14px;padding:1rem 1.25rem;margin:1rem 0;color:#16211a}
+.sun h2{color:#6b3600}
+details.hint{background:#ffffff;border:2px solid #cfdccc;border-radius:10px;padding:.5rem .9rem;margin:.5rem 0}
+details.hint summary{cursor:pointer;font-weight:700;color:#1f5f2a}
+pre{white-space:pre-wrap;word-break:break-word}
+h1[tabindex="-1"]:focus{outline:none}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="./">Learn Node on Node</a>
+    <nav class="site-nav" aria-label="Site"><ul><li><a href="./">Missions</a></li></ul></nav>
+  </div>
+  <p class="banner" style="margin:0"><strong>Practice copy.</strong> Everything on this page runs inside this browser tab. No real server, no real database, and no real accounts.</p>
+</header>
+<main id="app"><p>Loading the practice database...</p></main>
+<footer class="site-footer"><div class="inner"><p>APC 440 Web Development</p></div></footer>
+
+<script src="sql-wasm.js"></script>
+<script>
+(function () {
+'use strict';
+var app = document.getElementById('app');
+var SECRET = 'break-in-lock-it-down-m13-values-travel-as-dollar-one';
+var SQLLIB = null, db = null;
+
+/* ---------- helpers ---------- */
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function rand4() { var c = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', s = ''; for (var i = 0; i < 4; i++) { s += c[Math.floor(Math.random() * c.length)]; } return s; }
+function fnv(s) { var h = 0xcbf29ce484222325n, p = 0x100000001b3n; for (var i = 0; i < s.length; i++) { h ^= BigInt(s.charCodeAt(i)); h = (h * p) & 0xffffffffffffffffn; } return h; }
+function hashPassword(p) { return fnv('practice-salt|' + p).toString(16).padStart(16, '0'); }
+function norm(c) { return String(c).toUpperCase().replace(/\s/g, '').replace(/O/g, '0').replace(/[IL]/g, '1'); }
+function focusTop() { var h = app.querySelector('h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } window.scrollTo(0, 0); }
+
+var FLAGS = { leak: 'LEAK-' + rand4(), login: 'ADMIN-' + rand4() };
+var HIDDEN_IDS = [7, 8, 9];
+
+/* ---------- the practice database ---------- */
+function seed() {
+  if (db) { db.close(); }
+  db = new SQLLIB.Database();
+  db.run(
+    "CREATE TABLE feedback (id INTEGER PRIMARY KEY, lesson INTEGER NOT NULL, message TEXT NOT NULL, approved INTEGER NOT NULL, created_at TEXT NOT NULL);" +
+    "CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL);"
+  );
+  var fb = [
+    [1, 3, 'The kitchen analogy finally made the event loop click for me.', 1, '2027-04-19 09:14'],
+    [2, 5, 'Watching the uncaught error land in the error middleware was the best part.', 1, '2027-04-19 10:02'],
+    [3, 3, 'I predicted setTimeout before setImmediate. Wrong, and now I know why.', 1, '2027-04-20 08:47'],
+    [4, 6, 'Restarting the server and watching the count reset was a surprise.', 1, '2027-04-21 19:33'],
+    [5, 4, 'Parallel finished first even though I clicked it second!', 1, '2027-04-21 20:05'],
+    [6, 7, 'POST answering 201 with the new id makes a lot more sense now.', 1, '2027-04-22 11:41'],
+    [7, 7, 'Spam: get 10,000 followers today at totally-real-followers.example', 0, '2027-04-22 13:09'],
+    [8, 6, 'Please delete my earlier comment. I typed my phone number into it by mistake.', 0, '2027-04-22 15:26'],
+    [9, 2, 'Instructor draft, not for students: answer notes for the lesson 2 demo. FLAG: ' + FLAGS.leak, 0, '2027-04-23 07:58']
+  ];
+  var st = db.prepare('INSERT INTO feedback VALUES ($1, $2, $3, $4, $5)');
+  fb.forEach(function (r) { st.run(r); });
+  st.free();
+  var us = [[1, 'apc440-admin', hashPassword('k7#vQ2!mZp-not-guessable'), 'instructor'], [2, 'kmarsh', hashPassword('lesson7rocks'), 'student'], [3, 'tvega', hashPassword('EventLoop4ever'), 'student']];
+  st = db.prepare('INSERT INTO users VALUES ($1, $2, $3, $4)');
+  us.forEach(function (r) { st.run(r); });
+  st.free();
+}
+function run(sql, values) {
+  try {
+    var st = db.prepare(sql);
+    if (values) { st.bind(values); }
+    var rows = [];
+    while (st.step()) { rows.push(st.getAsObject()); }
+    st.free();
+    return { ok: true, rows: rows };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+/* ---------- the server handlers (each one matches the code it shows) ---------- */
+var LIST = {
+  vuln: {
+    code: "// GET /api/feedback?lesson=3   (feedback.js)\nexport async function listFeedback(req, res) {\n  const lesson = req.query.lesson;\n  const sql = `SELECT id, lesson, message FROM feedback\n               WHERE approved = 1 AND lesson = ${lesson}`;\n  const result = await query(sql);\n  res.json(result.rows);\n}",
+    handle: function (lesson) { return sqlParts(['SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = ', { u: lesson }]); }
+  },
+  quotes: {
+    label: 'Put quotes around the value',
+    code: "export async function listFeedback(req, res) {\n  const lesson = req.query.lesson;\n  const sql = `SELECT id, lesson, message FROM feedback\n               WHERE approved = 1 AND lesson = '${lesson}'`;\n  const result = await query(sql);\n  res.json(result.rows);\n}",
+    handle: function (lesson) { return sqlParts(['SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = \'', { u: lesson }, '\'']); },
+    why: "Quotes stop <code>3 OR 1=1</code>, because now it is just a strange piece of text. But <code>3' OR '1'='1</code> brings its own quote, closes yours early, and gets through. The attacker only needed one more character."
+  },
+  escape: {
+    label: 'Escape the quotes by hand',
+    code: "export async function listFeedback(req, res) {\n  const lesson = req.query.lesson.replaceAll(\"'\", \"''\");\n  const sql = `SELECT id, lesson, message FROM feedback\n               WHERE approved = 1 AND lesson = ${lesson}`;\n  const result = await query(sql);\n  res.json(result.rows);\n}",
+    handle: function (lesson) { return sqlParts(['SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = ', { u: lesson.replace(/'/g, "''") }]); },
+    why: "Doubling quotes protects a value that sits inside quotes. This value does not. <code>3 OR 1=1</code> has no quotes to escape, so it still leaks every row."
+  },
+  fixed: {
+    label: 'Validate, then send the value as $1',
+    code: "export async function listFeedback(req, res) {\n  const lesson = Number(req.query.lesson);\n  if (!Number.isInteger(lesson) || lesson < 1 || lesson > 7) {\n    return res.status(400).json({ error: 'lesson must be a whole number from 1 to 7' });\n  }\n  const result = await query(\n    'SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = $1',\n    [lesson]\n  );\n  res.json(result.rows);\n}",
+    handle: function (lesson) {
+      var n = Number(lesson);
+      if (String(lesson).trim() === '' || !Number.isInteger(n) || n < 1 || n > 7) { return { status: 400, body: { error: 'lesson must be a whole number from 1 to 7' }, sqlHtml: '(no query ran: validation answered first)', values: null }; }
+      var r = run('SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = $1', [n]);
+      return finish(r, esc('SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = $1'), [n]);
+    },
+    why: "The value travels separately, as <code>$1</code>, so the database never reads it as SQL. Validation turns away anything that is not a whole number before the query even runs."
+  }
+};
+var LOGIN = {
+  vuln: {
+    code: "// POST /api/login   (auth.js)\nexport async function login(req, res) {\n  const { username, password } = req.body;\n  const hash = hashPassword(password);\n  const sql = `SELECT id, username, role FROM users\n               WHERE username = '${username}' AND password_hash = '${hash}'`;\n  const result = await query(sql);\n  if (result.rows.length === 0) {\n    return res.status(401).json({ error: 'Wrong username or password' });\n  }\n  res.json({ welcome: result.rows[0].username, role: result.rows[0].role });\n}",
+    handle: function (u, p) { return loginParts(u, p); }
+  },
+  length: {
+    label: 'Limit the length of both fields',
+    code: "export async function login(req, res) {\n  const { username, password } = req.body;\n  if (username.length > 30 || password.length > 30) {\n    return res.status(400).json({ error: 'Too long' });\n  }\n  const hash = hashPassword(password);\n  const sql = `SELECT id, username, role FROM users\n               WHERE username = '${username}' AND password_hash = '${hash}'`;\n  // ... same as before\n}",
+    handle: function (u, p) { if (u.length > 30 || p.length > 30) { return { status: 400, body: { error: 'Too long' }, sqlHtml: '(no query ran: validation answered first)', values: null }; } return loginParts(u, p); },
+    why: "<code>' OR '1'='1' --</code> is only 15 characters. Length limits are a good habit, but they do not stop injection."
+  },
+  blockor: {
+    label: 'Block any input that contains OR',
+    code: "export async function login(req, res) {\n  const { username, password } = req.body;\n  if (/\\bor\\b/i.test(username) || /\\bor\\b/i.test(password)) {\n    return res.status(400).json({ error: 'That looks like an attack' });\n  }\n  const hash = hashPassword(password);\n  const sql = `SELECT id, username, role FROM users\n               WHERE username = '${username}' AND password_hash = '${hash}'`;\n  // ... same as before\n}",
+    handle: function (u, p) { if (/\bor\b/i.test(u) || /\bor\b/i.test(p)) { return { status: 400, body: { error: 'That looks like an attack' }, sqlHtml: '(no query ran: validation answered first)', values: null }; } return loginParts(u, p); },
+    why: "Blocking OR stops one attack, but <code>apc440-admin' --</code> needs no OR at all. A blocklist always misses something."
+  },
+  fixed: {
+    label: 'Send both values as $1 and $2',
+    code: "export async function login(req, res) {\n  const { username, password } = req.body;\n  const result = await query(\n    'SELECT id, username, role FROM users WHERE username = $1 AND password_hash = $2',\n    [username, hashPassword(password)]\n  );\n  if (result.rows.length === 0) {\n    return res.status(401).json({ error: 'Wrong username or password' });\n  }\n  res.json({ welcome: result.rows[0].username, role: result.rows[0].role });\n}",
+    handle: function (u, p) {
+      var vals = [u, hashPassword(p)];
+      var r = run('SELECT id, username, role FROM users WHERE username = $1 AND password_hash = $2', vals);
+      return loginFinish(r, esc('SELECT id, username, role FROM users WHERE username = $1 AND password_hash = $2'), vals);
+    },
+    why: "The username and the password hash travel as <code>$1</code> and <code>$2</code>. A quote in the username is just one more character in a value, never the end of a string."
+  }
+};
+function sqlParts(parts) {
+  var sql = '', html = '';
+  parts.forEach(function (p) {
+    if (typeof p === 'string') { sql += p; html += esc(p); }
+    else { sql += p.u; html += '<mark class="inj"><span class="sr-only">[your input:] </span>' + esc(p.u) + '<span class="sr-only"> [end of your input]</span></mark>'; }
+  });
+  return finish(run(sql), html, null);
+}
+function finish(r, sqlHtml, values) {
+  if (!r.ok) { return { status: 500, body: { error: 'Something went wrong on the server' }, terminal: 'Error: ' + r.error, sqlHtml: sqlHtml, values: values }; }
+  return { status: 200, body: r.rows, sqlHtml: sqlHtml, values: values };
+}
+function loginParts(u, p) {
+  var h = hashPassword(p);
+  var sql = "SELECT id, username, role FROM users WHERE username = '" + u + "' AND password_hash = '" + h + "'";
+  var html = esc("SELECT id, username, role FROM users WHERE username = '") + '<mark class="inj"><span class="sr-only">[your input:] </span>' + esc(u) + '<span class="sr-only"> [end of your input]</span></mark>' + esc("' AND password_hash = '" + h + "'");
+  return loginFinish(run(sql), html, null);
+}
+function loginFinish(r, sqlHtml, values) {
+  if (!r.ok) { return { status: 500, body: { error: 'Something went wrong on the server' }, terminal: 'Error: ' + r.error, sqlHtml: sqlHtml, values: values }; }
+  if (r.rows.length === 0) { return { status: 401, body: { error: 'Wrong username or password' }, sqlHtml: sqlHtml, values: values }; }
+  return { status: 200, body: { welcome: r.rows[0].username, role: r.rows[0].role }, sqlHtml: sqlHtml, values: values };
+}
+var STATUS_TEXT = { 200: 'OK', 400: 'Bad Request', 401: 'Unauthorized', 500: 'Internal Server Error' };
+function responseHtml(res) {
+  var h = '<span class="lbl">The SQL the server ran</span><pre aria-live="polite"><code>' + res.sqlHtml + (res.values ? '\n\nvalues: ' + esc(JSON.stringify(res.values)) : '') + '</code></pre>';
+  h += '<span class="lbl">What the server sent back</span><pre class="demo-output"><code><span class="demo-status">HTTP ' + res.status + ' ' + STATUS_TEXT[res.status] + '</span>\n\n' + esc(JSON.stringify(res.body, null, 2)) + '</code></pre>';
+  if (res.terminal) { h += '<span class="lbl">Your server terminal (only you see this)</span><pre class="term"><code>' + esc(res.terminal) + '</code></pre>'; }
+  return h;
+}
+function codeBlock(file, code) { return '<span class="code-file">' + esc(file) + '</span><pre><code>' + esc(code) + '</code></pre>'; }
+function leaked(res) { return res.status === 200 && Array.isArray(res.body) && res.body.some(function (r) { return HIDDEN_IDS.indexOf(r.id) >= 0; }); }
+
+/* ---------- multiple choice ---------- */
+function mcHtml(id, q) {
+  var order = shuffle(q.o.map(function (o, i) { return i; }));
+  return '<div class="q" id="' + id + '"><h3>' + q.q + '</h3><div class="opts">' + order.map(function (i) { return '<button class="opt" data-i="' + i + '">' + q.o[i] + '</button>'; }).join('') + '</div><div class="qfb" aria-live="polite"></div></div>';
+}
+function wireMc(id, q, onDone) {
+  var box = document.getElementById(id), btns = box.querySelectorAll('.opt');
+  btns.forEach(function (b) {
+    b.onclick = function () {
+      var i = +b.dataset.i, ok = i === 0;
+      btns.forEach(function (x) {
+        x.disabled = true; var xi = +x.dataset.i;
+        if (xi === 0) { x.classList.add('right'); x.insertAdjacentHTML('beforeend', '<span class="why">Correct answer</span>'); }
+        else if (xi === i) { x.classList.add('wrong'); x.insertAdjacentHTML('beforeend', '<span class="why">Your answer</span>'); }
+      });
+      box.querySelector('.qfb').innerHTML = '<div class="fb ' + (ok ? 'ok' : 'no') + '"><strong class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct.' : 'Not quite.') + '</strong> ' + q.e + '</div>';
+      onDone(ok);
+    };
+  });
+}
+
+/* ---------- state ---------- */
+var STATIONS = [
+  { name: 'Recon: read the query', topic: 'How your input becomes SQL' },
+  { name: 'The leak', topic: 'OR 1=1 on the lesson filter' },
+  { name: 'The login bypass', topic: "' OR '1'='1' -- on the instructor login" },
+  { name: 'Lock it down', topic: 'Fix both handlers, then prove it' },
+  { name: 'Spot the hole', topic: 'Safe or unsafe, including AI-written code' }
+];
+var G = { best: [null, null, null, null, null], name: '', payloads: { leak: null, login: null } };
+function overall() { var played = G.best.filter(function (b) { return b !== null; }); return Math.round(G.best.reduce(function (a, b) { return a + (b || 0); }, 0) / STATIONS.length); }
+function saveScore(i, pct) { pct = Math.max(0, Math.min(100, Math.round(pct))); if (G.best[i] === null || pct > G.best[i]) { G.best[i] = pct; } return pct; }
+
+/* ---------- home ---------- */
+function home() {
+  var played = G.best.some(function (b) { return b !== null; });
+  app.innerHTML =
+    '<span class="pill">Module 13 &bull; Show What You Know</span><h1>Break In, Lock It Down</h1>' +
+    '<p class="lead">This is a practice copy of your Learn Node on Node site, with a real database running inside this tab. First you break in with SQL injection. Then you lock it down, the same way your Lab 13 code already does.</p>' +
+    '<section class="note" aria-labelledby="eth"><h2 id="eth" style="color:#6b3600;font-size:1.1rem;margin:0 0 .25rem">Attack only what you own</h2><p style="margin:0">Use these skills only on sites you own or have written permission to test. Trying them on anyone else&rsquo;s site is illegal. Everything here is a practice copy built to be broken.</p></section>' +
+    '<p>Work the five stations in order. Replay any station as often as you like: your <strong>best percent at each station is kept</strong> until you reload this page.</p>' +
+    '<div class="tiles">' + STATIONS.map(function (s, i) {
+      var b = G.best[i];
+      return '<button class="tile" data-go="' + i + '"><span class="nm">' + (i + 1) + '. ' + esc(s.name) + '</span><span class="tp">' + esc(s.topic) + '</span><span class="sc' + (b === 100 ? ' full' : '') + '">' + (b === null ? 'Not played yet' : 'Best: ' + b + '%' + (b === 100 ? ' (perfect)' : '')) + '</span></button>';
+    }).join('') + '</div>' +
+    '<section class="sun" aria-labelledby="sf"><h2 id="sf">Your results so far</h2><p style="margin:0 0 .5rem"><strong>Overall: ' + overall() + '%</strong>, the average of all five stations. A station you have not played counts as 0%.</p>' +
+    '<label for="nm">Your name, as it appears in Canvas</label><input type="text" id="nm" autocomplete="name"><p class="err" id="nmerr" role="alert"></p>' +
+    '<button id="cert"' + (played ? '' : ' disabled') + '>Download my certificate</button>' +
+    '<p style="margin:.75rem 0 0">Upload the certificate image to the Canvas assignment. Your results reset if you reload this page, so download it before you leave.</p></section>';
+  app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { STATION_FN[+b.dataset.go](); }; });
+  var nm = document.getElementById('nm'); nm.value = G.name; nm.oninput = function () { G.name = nm.value; document.getElementById('nmerr').textContent = ''; };
+  document.getElementById('cert').onclick = certificate;
+  focusTop();
+}
+function stationHead(i) { return '<span class="pill">Station ' + (i + 1) + ' of 5</span><h1>' + esc(STATIONS[i].name) + '</h1>'; }
+function finishBar(i) { return '<div class="row" style="margin-top:1.25rem"><button id="finish" disabled>Finish this station</button><button class="btn-alt" id="back">Back to the missions</button></div><p id="finishnote" class="prog" aria-live="polite"></p>'; }
+function wireBack() { document.getElementById('back').onclick = home; }
+function done(i, pct, detail) {
+  var got = saveScore(i, pct), best = G.best[i];
+  app.innerHTML = '<span class="pill">Station ' + (i + 1) + ' of 5</span><h1>Station complete: ' + esc(STATIONS[i].name) + '</h1>' +
+    '<div class="sun"><p style="margin:0;font-size:1.2rem"><strong>This round: ' + got + '%.</strong> Your best at this station: <strong>' + best + '%</strong>.</p>' + (detail ? '<p style="margin:.5rem 0 0">' + detail + '</p>' : '') + '</div>' +
+    '<div class="row"><button id="again" class="btn-alt">Play this station again</button><button id="back">Back to the missions</button></div>';
+  document.getElementById('again').onclick = function () { STATION_FN[i](); };
+  wireBack(); focusTop();
+}
+
+/* ---------- station 1: recon ---------- */
+var RECON_Q = [
+  { q: 'In the SQL the server ran for lesson 3, which part came from what you typed?', o: ['The <code>3</code> at the very end', '<code>approved = 1</code>', '<code>SELECT id, lesson, message</code>', '<code>FROM feedback</code>'], e: 'Your input was pasted in right after <code>lesson =</code>. Every other word came from the code.' },
+  { q: 'Why did lesson 3 show only some feedback, not every row in the table?', o: ['<code>approved = 1</code> hides feedback the instructor has not approved yet', 'The table only stores lesson 3', 'The browser filters the list', 'The other rows were deleted'], e: 'The table holds approved and unapproved feedback. The WHERE clause is the only thing keeping the unapproved rows hidden.' },
+  { q: 'When you typed <code>abc</code>, the server answered 500 and your terminal said <code>no such column: abc</code>. What does that tell you?', o: ['The database read <code>abc</code> as part of the SQL itself, as a column name', '<code>abc</code> is a lesson that does not exist', 'The server crashed and needs a restart', 'Letters are not allowed in a URL'], e: 'Your input was not treated as a value. It was treated as SQL code. That is the hole you will use in the next station.' },
+  { q: 'Predict: if you type <code>3 OR 1=1</code>, what SQL will the server run?', o: ['<code>... AND lesson = 3 OR 1=1</code>', "<code>... AND lesson = '3 OR 1=1'</code>", '<code>... AND lesson = 3</code>', 'None: the server refuses to run it'], e: 'The code pastes whatever you type, so the SQL ends with <code>lesson = 3 OR 1=1</code>. You will see what that does next.' },
+  { q: 'What is the root problem in this handler?', o: ['It builds SQL by pasting visitor input into a template literal', 'It uses <code>async</code> and <code>await</code>', 'It answers with JSON', 'It reads <code>req.query</code>'], e: 'Reading the query string is fine. Pasting what you read into SQL is the problem.' }
+];
+function stationRecon() {
+  var did = { ok: false, abc: false }, answered = 0, right = 0;
+  app.innerHTML = stationHead(0) +
+    '<p class="lead">Before you attack, read the code. This is the practice copy&rsquo;s lesson filter: <code>GET /api/feedback?lesson=3</code>. It looks a lot like your Lab 13 code, with one small difference that matters.</p>' +
+    '<p>This practice copy also has one feature your site does not: new feedback waits for the instructor to approve it. Unapproved feedback is supposed to stay hidden.</p>' +
+    codeBlock('feedback.js (practice copy)', LIST.vuln.code) +
+    '<section class="demo" aria-labelledby="try1"><h2 id="try1">Try it live</h2><ul class="tasks" aria-live="polite" id="tasks"></ul>' +
+    '<label for="lesson">Show feedback for lesson</label><div class="row"><input type="text" id="lesson" value="3" style="max-width:14rem"><button id="go">Send the request</button></div>' +
+    '<p class="demo-endpoint" id="ep" style="margin-top:.5rem"></p><div id="out"></div></section>' +
+    '<section aria-labelledby="qs"><h2 id="qs">What did you see?</h2><p id="lock">Do both tasks in the Try it live box to unlock these questions.</p><div id="qbox"></div></section>' + finishBar(0);
+  function tasks() {
+    document.getElementById('tasks').innerHTML =
+      '<li><span aria-hidden="true">' + (did.ok ? '&#10003;' : '&#9744;') + ' </span>' + (did.ok ? '<strong>Done:</strong> ' : '<strong>To do:</strong> ') + 'send lesson <code>3</code> and read the SQL the server ran.</li>' +
+      '<li><span aria-hidden="true">' + (did.abc ? '&#10003;' : '&#9744;') + ' </span>' + (did.abc ? '<strong>Done:</strong> ' : '<strong>To do:</strong> ') + 'send <code>abc</code> and read your server terminal.</li>';
+    if (did.ok && did.abc && !document.getElementById('rq0')) {
+      document.getElementById('lock').textContent = 'Answer all five. Your first answer to each one counts.';
+      document.getElementById('qbox').innerHTML = RECON_Q.map(function (q, k) { return mcHtml('rq' + k, q); }).join('');
+      RECON_Q.forEach(function (q, k) { wireMc('rq' + k, q, function (ok) { answered++; if (ok) { right++; } if (answered === RECON_Q.length) { var f = document.getElementById('finish'); f.disabled = false; document.getElementById('finishnote').textContent = 'All questions answered. Finish when you are ready.'; } }); });
+    }
+  }
+  document.getElementById('go').onclick = function () {
+    var v = document.getElementById('lesson').value;
+    var res = LIST.vuln.handle(v);
+    document.getElementById('ep').textContent = 'GET /api/feedback?lesson=' + v;
+    document.getElementById('out').innerHTML = responseHtml(res);
+    if (res.status === 200 && res.body.length > 0 && v.trim() === '3') { did.ok = true; }
+    if (res.status === 500 && /abc/.test(res.terminal || '')) { did.abc = true; }
+    tasks();
+  };
+  document.getElementById('finish').onclick = function () { done(0, right / RECON_Q.length * 100, right + ' of ' + RECON_Q.length + ' questions right on the first try.'); };
+  wireBack(); tasks(); focusTop();
+}
+
+/* ---------- attack stations (2 and 3) ---------- */
+var LEAK = {
+  predict: { q: 'Before you try anything: what do you think <code>3 OR 1=1</code> will do?', o: ['Show only lesson 3 feedback', 'Show an error', 'Show every row, even the hidden ones', 'Delete the table'] },
+  hints: [
+    'Your input lands right after <code>lesson =</code>, with no quotes around it. Whatever you type becomes part of the WHERE clause.',
+    'A row shows up when its whole WHERE condition is true. Can you add something to the condition that is true for every row?',
+    'Type a lesson number, a space, <code>OR</code>, and a comparison that is always true: <code>3 OR 1=1</code>.'
+  ],
+  qs: [
+    { q: 'Why did <code>3 OR 1=1</code> return every row, even the hidden ones?', o: ['SQL checks AND before OR, so the WHERE became <code>(approved = 1 AND lesson = 3) OR 1=1</code>, and <code>1=1</code> is true for every row', '<code>OR 1=1</code> is a special command that shows hidden rows', 'The approved check broke because of an error', '<code>1=1</code> is a database password'], e: 'AND binds tighter than OR. Your <code>OR 1=1</code> sits outside the approved check, and it is true for every row, so every row matches.' },
+    { q: 'On a real site, what could this same hole leak?', o: ['Anything that query can reach: private messages, email addresses, unpublished drafts', 'Nothing: it only changes the sort order', 'Only rows the attacker wrote', 'Only data that is already public'], e: 'Look at what leaked here: spam, a phone number someone asked to delete, and an instructor draft. On a real site it could be customer records.' }
+  ]
+};
+var LOGINQ = {
+  predict: { q: "Before you try anything: the username lands inside quotes, <code>username = '...'</code>. What happens if your username contains a single quote?", o: ['It ends the string early, and whatever comes after is read as SQL', 'Nothing: quotes are ignored', 'The login always fails', 'The password is skipped'] },
+  hints: [
+    "Your username lands inside quotes: <code>username = '...'</code>. A single quote of your own ends that string early.",
+    "After you close the quote, add <code>OR</code> and something always true. Then two dashes, <code>--</code>, turn the rest of the line into a comment, including the password check. (MySQL also accepts <code>#</code>, but this database only uses <code>--</code>.)",
+    "Type this as the username, with any password: <code>' OR '1'='1' --</code>"
+  ],
+  qs: [
+    { q: "In <code>' OR '1'='1' --</code>, what does the first single quote do?", o: ['It closes the username string early, so everything after it is read as SQL', 'It starts a comment', 'Nothing: the database ignores it', 'It hides the username'], e: 'The code put a quote before your input and expected another one after it. Your quote ended the string early, and the rest of your input became SQL.' },
+    { q: 'What does <code>--</code> do at the end?', o: ['It turns the rest of the line into a comment, so the password check never runs', 'It subtracts one from the user id', 'It logs every other user out', 'It deletes the password column'], e: 'Everything after <code>--</code> is a comment, including <code>AND password_hash = ...</code>. The query only checks the part you wrote.' }
+  ]
+};
+function attackStation(i, cfg) {
+  var hintsUsed = 0, flagOk = false, predicted = null, answered = 0, right = 0;
+  var isLeak = i === 1;
+  var intro = isLeak
+    ? '<p class="lead">Mission: make the lesson filter show the feedback the instructor has not approved. One hidden post holds a flag code. Find it and type it in to prove you got in.</p>'
+    : '<p class="lead">Mission: get into the instructor dashboard without the instructor&rsquo;s password. The dashboard shows a flag code. Type it in to prove you got in.</p><p>Your own practice account is <code>kmarsh</code> with the password <code>lesson7rocks</code>. Log in honestly first and read the SQL. The instructor&rsquo;s username is <code>apc440-admin</code>, and you will never know that password.</p>';
+  var form = isLeak
+    ? '<label for="lesson">Show feedback for lesson</label><div class="row"><input type="text" id="lesson" value="3" style="max-width:20rem"><button id="go">Send the request</button></div>'
+    : '<label for="un">Username</label><input type="text" id="un" autocomplete="off" spellcheck="false"><label for="pw">Password</label><input type="password" id="pw" autocomplete="off"><p style="margin:.6rem 0 0"><button id="go">Log in</button></p>';
+  var q = isLeak ? LEAK : LOGINQ;
+  app.innerHTML = stationHead(i) + intro +
+    codeBlock(isLeak ? 'feedback.js (practice copy)' : 'auth.js (practice copy)', isLeak ? LIST.vuln.code : LOGIN.vuln.code) +
+    '<section aria-labelledby="pr"><h2 id="pr">Predict first</h2>' + mcHtml('pred', { q: q.predict.q, o: q.predict.o }) + '</section>' +
+    '<section class="demo" aria-labelledby="atk"><h2 id="atk">Try it live</h2>' + form +
+    '<p class="demo-endpoint" id="ep" style="margin-top:.5rem"></p><div id="out"></div><div id="dash"></div>' +
+    '<div class="row" style="margin-top:.5rem"><button class="btn-alt" id="hint">Show a hint</button><button class="btn-alt" id="reset">Reset the database</button></div><div id="hints" aria-live="polite"></div></section>' +
+    '<section aria-labelledby="fl"><h2 id="fl">Prove it: the flag</h2><label for="flag">Flag code you found</label><div class="row"><input type="text" id="flag" style="max-width:14rem" autocomplete="off"><button id="flagbtn">Check the flag</button></div><div id="flagfb" aria-live="polite"></div></section>' +
+    '<section aria-labelledby="ex"><h2 id="ex">Explain it</h2><p id="exlock">Capture the flag, or use all three hints, to unlock these questions.</p><div id="qbox"></div></section>' + finishBar(i);
+  // prediction (not scored): record the choice
+  var pbtns = document.querySelectorAll('#pred .opt');
+  pbtns.forEach(function (b) { b.onclick = function () { predicted = q.predict.o[+b.dataset.i]; pbtns.forEach(function (x) { x.disabled = true; if (x === b) { x.classList.add('right'); x.insertAdjacentHTML('beforeend', '<span class="why">Your prediction</span>'); } }); document.querySelector('#pred .qfb').innerHTML = '<div class="fb ok"><strong class="ok">Saved.</strong> Predictions are not scored. Now try it and see if you were right.</div>'; }; });
+  function unlock() {
+    if (document.getElementById('xq0')) { return; }
+    document.getElementById('exlock').textContent = 'Answer both. Your first answer to each one counts.';
+    document.getElementById('qbox').innerHTML = q.qs.map(function (x, k) { return mcHtml('xq' + k, x); }).join('');
+    q.qs.forEach(function (x, k) { wireMc('xq' + k, x, function (ok) { answered++; if (ok) { right++; } if (answered === q.qs.length) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'All questions answered. Finish when you are ready.'; } }); });
+  }
+  document.getElementById('go').onclick = function () {
+    var res, attempt;
+    if (isLeak) {
+      attempt = document.getElementById('lesson').value;
+      res = LIST.vuln.handle(attempt);
+      document.getElementById('ep').textContent = 'GET /api/feedback?lesson=' + attempt;
+    } else {
+      var u = document.getElementById('un').value, p = document.getElementById('pw').value;
+      attempt = u;
+      res = LOGIN.vuln.handle(u, p);
+      document.getElementById('ep').textContent = 'POST /api/login   body: ' + JSON.stringify({ username: u, password: p.replace(/./g, '*') });
+    }
+    document.getElementById('out').innerHTML = responseHtml(res);
+    var dash = document.getElementById('dash'); dash.innerHTML = '';
+    if (isLeak && leaked(res)) {
+      G.payloads.leak = attempt;
+      dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">You got the hidden rows.</h3><p style="margin:0">Find the flag inside the instructor draft, then type it into the flag box.' + (predicted ? ' You predicted: <strong>' + predicted + '</strong>.' : '') + '</p></div>';
+    }
+    if (!isLeak && res.status === 200) {
+      if (res.body.role === 'instructor') {
+        if (attempt !== 'apc440-admin') { G.payloads.login = attempt; }
+        dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">Instructor dashboard</h3><p style="margin:0 0 .4rem">Welcome back, ' + esc(res.body.welcome) + '. 3 feedback posts are waiting for your approval.</p><p style="margin:0">Staff flag: <span class="flag">' + FLAGS.login + '</span></p>' + (predicted ? '<p style="margin:.4rem 0 0">You predicted: <strong>' + predicted + '</strong>.</p>' : '') + '</div>';
+      } else {
+        dash.innerHTML = '<div class="fb ok"><strong class="ok">Logged in as ' + esc(res.body.welcome) + ' (student).</strong> That is an honest login. Read the SQL above, then go after the instructor account.</div>';
+      }
+    }
+  };
+  document.getElementById('hint').onclick = function () {
+    if (hintsUsed >= 3) { return; }
+    hintsUsed++;
+    document.getElementById('hints').insertAdjacentHTML('beforeend', '<div class="fb ok"><strong class="ok">Hint ' + hintsUsed + ' of 3:</strong> ' + q.hints[hintsUsed - 1] + '</div>');
+    if (hintsUsed === 3) { document.getElementById('hint').disabled = true; unlock(); }
+  };
+  document.getElementById('reset').onclick = function () { seed(); document.getElementById('out').innerHTML = '<p class="prog">The practice database is back to how it started.</p>'; document.getElementById('dash').innerHTML = ''; };
+  document.getElementById('flagbtn').onclick = function () {
+    var want = isLeak ? FLAGS.leak : FLAGS.login, got = document.getElementById('flag').value;
+    var fb = document.getElementById('flagfb');
+    if (norm(got) === norm(want)) { flagOk = true; fb.innerHTML = '<div class="fb ok"><strong class="ok">Flag accepted.</strong> You broke in. Now explain how.</div>'; document.getElementById('flagbtn').disabled = true; unlock(); }
+    else { fb.innerHTML = '<div class="fb no"><strong class="no">Not that one.</strong> Copy the flag code exactly as it appears, for example ' + (isLeak ? 'LEAK-' : 'ADMIN-') + 'followed by four characters.</div>'; }
+  };
+  document.getElementById('finish').onclick = function () {
+    var flagPts = flagOk ? Math.max(30, 60 - 10 * hintsUsed) : 0, qPts = right * 20;
+    done(i, flagPts + qPts, (flagOk ? 'Flag captured with ' + hintsUsed + ' hint' + (hintsUsed === 1 ? '' : 's') + ': ' + flagPts + ' of 60. ' : 'No flag this round: 0 of 60. ') + 'Explain it: ' + qPts + ' of 40.');
+  };
+  wireBack(); focusTop();
+}
+
+/* ---------- station 4: lock it down ---------- */
+function leakBattery(variant) {
+  var tries = [{ label: 'Honest request: lesson 3', v: '3', honest: true }, { label: 'Attack: 3 OR 1=1', v: '3 OR 1=1' }, { label: "Attack: 3' OR '1'='1", v: "3' OR '1'='1" }];
+  if (G.payloads.leak && tries.every(function (t) { return t.v !== G.payloads.leak; })) { tries.push({ label: 'Your own attack from station 2: ' + G.payloads.leak, v: G.payloads.leak }); }
+  return tries.map(function (t) {
+    var res = LIST[variant].handle(t.v), verdict;
+    if (t.honest) { verdict = res.status === 200 && res.body.length > 0 ? ['good', 'Works'] : ['bad', 'Broken: honest visitors get nothing']; }
+    else { verdict = leaked(res) ? ['bad', 'Leaked hidden rows'] : (res.status === 500 ? ['good', 'Blocked (with a 500 error)'] : ['good', 'Blocked']); }
+    return { label: t.label, res: res, verdict: verdict };
+  });
+}
+function loginBattery(variant) {
+  var tries = [{ label: 'Honest login: kmarsh / lesson7rocks', u: 'kmarsh', p: 'lesson7rocks', honest: true }, { label: "Attack: ' OR '1'='1' --", u: "' OR '1'='1' --", p: 'anything' }, { label: "Attack: apc440-admin' --", u: "apc440-admin' --", p: 'anything' }];
+  if (G.payloads.login && tries.every(function (t) { return t.u !== G.payloads.login; })) { tries.push({ label: 'Your own attack from station 3: ' + G.payloads.login, u: G.payloads.login, p: 'anything' }); }
+  return tries.map(function (t) {
+    var res = LOGIN[variant].handle(t.u, t.p), verdict;
+    if (t.honest) { verdict = res.status === 200 && res.body.welcome === 'kmarsh' ? ['good', 'Works'] : ['bad', 'Broken: honest users cannot log in']; }
+    else { verdict = res.status === 200 ? ['bad', 'Broke in as ' + res.body.welcome] : (res.status === 500 ? ['good', 'Blocked (with a 500 error)'] : ['good', 'Blocked']); }
+    return { label: t.label, res: res, verdict: verdict };
+  });
+}
+function batteryTable(rows, caption) {
+  return '<table><caption>' + caption + '</caption><thead><tr><th scope="col">Request</th><th scope="col">The server sent back</th><th scope="col">Result</th></tr></thead><tbody>' +
+    rows.map(function (r) {
+      var b = r.res.body, sent = 'HTTP ' + r.res.status + (Array.isArray(b) ? ', ' + b.length + ' row' + (b.length === 1 ? '' : 's') : (b.error ? ', ' + b.error : ', welcome ' + b.welcome));
+      return '<tr><th scope="row" style="font-weight:600">' + esc(r.label) + '</th><td>' + esc(sent) + '</td><td class="verdict-' + r.verdict[0] + '">' + esc(r.verdict[1]) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function fixPart(id, title, intro, table, variants, battery, onDone) {
+  var tries = 0, finished = false;
+  var order = shuffle(variants);
+  var box = document.getElementById(id);
+  box.innerHTML = '<h2>' + title + '</h2><p>' + intro + '</p>' + order.map(function (v, k) {
+    return '<div class="choice" id="' + id + '-c' + k + '"><h3>Option ' + (k + 1) + '</h3><pre><code>' + esc(table[v].code) + '</code></pre><button data-v="' + v + '">Use option ' + (k + 1) + ' and rerun the attacks</button><div class="res" aria-live="polite"></div></div>';
+  }).join('');
+  box.querySelectorAll('button[data-v]').forEach(function (b) {
+    b.onclick = function () {
+      if (finished) { return; }
+      var v = b.dataset.v, card = b.parentNode, rows = battery(v), ok = v === 'fixed';
+      tries++;
+      card.classList.add(ok ? 'picked-right' : 'picked-wrong');
+      card.querySelector('.res').innerHTML = batteryTable(rows, 'Your attacks against this version') +
+        '<div class="fb ' + (ok ? 'ok' : 'no') + '"><strong class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'FIXED.' : 'WRONG: this version is still open.') + '</strong> ' + table[v].why + '</div>';
+      b.disabled = true;
+      if (ok || tries >= 2) {
+        finished = true;
+        box.querySelectorAll('button[data-v]').forEach(function (x) { x.disabled = true; });
+        if (!ok) {
+          var fixedCard = box.querySelector('button[data-v="fixed"]').parentNode;
+          fixedCard.classList.add('picked-right');
+          fixedCard.querySelector('.res').innerHTML = batteryTable(battery('fixed'), 'The same attacks against the fixed version') + '<div class="fb ok"><strong class="ok">This is the fix.</strong> ' + table.fixed.why + '</div>';
+        }
+        onDone(ok ? (tries === 1 ? 50 : 25) : 0);
+      }
+    };
+  });
+}
+function stationLock() {
+  var pts = [null, null];
+  app.innerHTML = stationHead(3) +
+    '<p class="lead">You broke in twice. Now fix both handlers. Read each version, pick the one you trust, and the station reruns real attacks against it, including the ones that worked for you. Full credit on the first try, half credit on the second.</p>' +
+    '<section class="card" id="partA"></section><section class="card" id="partB"></section>' + finishBar(3);
+  function check() { if (pts[0] !== null && pts[1] !== null) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'Both handlers are locked down. Finish when you are ready.'; } }
+  fixPart('partA', 'Part 1: the lesson filter', 'Which version of <code>listFeedback</code> stops the leak and still works for honest visitors?', LIST, ['quotes', 'escape', 'fixed'], leakBattery, function (p) { pts[0] = p; check(); });
+  fixPart('partB', 'Part 2: the login', 'Which version of <code>login</code> keeps attackers out and still lets <code>kmarsh</code> in?', LOGIN, ['length', 'blockor', 'fixed'], loginBattery, function (p) { pts[1] = p; check(); });
+  document.getElementById('finish').onclick = function () { done(3, pts[0] + pts[1], 'Lesson filter: ' + pts[0] + ' of 50. Login: ' + pts[1] + ' of 50. Compare the fixed versions with your own Lab 13 feedback.js: same idea, values travel as $1.'); };
+  wireBack(); focusTop();
+}
+
+/* ---------- station 5: spot the hole ---------- */
+var SNIPS = [
+  { ai: false, safe: false, code: "app.get('/api/feedback/:id', async (req, res) => {\n  const result = await query(`SELECT * FROM feedback WHERE id = ${req.params.id}`);\n  res.json(result.rows[0]);\n});", e: '<code>req.params.id</code> comes from the URL, and it is pasted straight into the SQL. <code>/api/feedback/1 OR 1=1</code> would return a different row than the visitor asked for.' },
+  { ai: false, safe: true, code: "app.get('/api/feedback/:id', async (req, res) => {\n  const result = await query('SELECT * FROM feedback WHERE id = $1', [req.params.id]);\n  res.json(result.rows[0]);\n});", e: 'The id travels as <code>$1</code>, separate from the SQL. Same route, same input, no hole.' },
+  { ai: true, safe: false, code: "// Written by an AI assistant: \"Here is a clean, efficient search route!\"\nexport async function searchFeedback(req, res) {\n  const term = req.query.q.trim();\n  const sql = \"SELECT id, message FROM feedback WHERE message LIKE '%\" + term + \"%'\";\n  const result = await query(sql);\n  res.json(result.rows);\n}", e: 'Clean and efficient, but it joins <code>term</code> into the SQL with <code>+</code>. <code>trim()</code> only removes spaces. A quote in the search box ends the string early. Being clean is not the same as being safe.' },
+  { ai: true, safe: false, code: "// Written by an AI assistant: \"Sorting added, and it uses parameters, so it's safe!\"\nexport async function listFeedback(req, res) {\n  const sort = req.query.sort || 'id';\n  const result = await query(\n    `SELECT * FROM feedback WHERE lesson = $1 ORDER BY ${sort}`,\n    [req.query.lesson]\n  );\n  res.json(result.rows);\n}", e: 'The AI is half right. <code>lesson</code> travels as <code>$1</code>, but <code>sort</code> is pasted into the SQL. One <code>$1</code> does not protect the rest of the query. Never take an AI&rsquo;s word that its code is safe: read it.' },
+  { ai: false, safe: true, code: "export async function listFeedback(req, res) {\n  const result = await query('SELECT id, lesson, message FROM feedback ORDER BY id DESC');\n  res.json(result.rows);\n}", e: 'No visitor input goes into this SQL at all, so there is nothing to inject.' },
+  { ai: false, safe: true, code: "const TABLE = 'feedback';\nexport async function countFeedback(req, res) {\n  const result = await query(`SELECT COUNT(*) AS total FROM ${TABLE}`);\n  res.json(result.rows[0]);\n}", e: 'A template literal is not the problem by itself. This one only holds a constant the programmer wrote. The danger is visitor input inside SQL, and there is none here.' },
+  { ai: false, safe: false, code: "export async function byLesson(req, res) {\n  const lesson = req.query.lesson.replaceAll(\"'\", \"''\");\n  const result = await query(`SELECT * FROM feedback WHERE lesson = ${lesson}`);\n  res.json(result.rows);\n}", e: 'You saw this one in station 4. Escaping quotes does nothing when the value is not inside quotes. <code>3 OR 1=1</code> has no quotes to escape.' },
+  { ai: false, safe: true, code: "export async function createFeedback(req, res) {\n  const { lesson, message } = req.body;\n  const result = await query(\n    'INSERT INTO feedback (lesson, message) VALUES ($1, $2) RETURNING *',\n    [lesson, message]\n  );\n  res.status(201).json(result.rows[0]);\n}", e: 'This is the pattern from your Lab 13 code. Both values travel as <code>$1</code> and <code>$2</code>, so a quote in a message is just text.' },
+  { ai: false, safe: false, code: "export async function login(req, res) {\n  const { username, password } = req.body;\n  if (username.length > 30) {\n    return res.status(400).json({ error: 'Too long' });\n  }\n  const result = await query(\n    `SELECT * FROM users WHERE username = '${username}'`\n  );\n  // ... check the password hash\n}", e: 'The length check is fine, but the username is still pasted inside quotes. <code>apc440-admin\' --</code> is only 16 characters.' }
+];
+function stationSpot() {
+  var ai = shuffle(SNIPS.filter(function (s) { return s.ai; }))[0];
+  var rest = shuffle(SNIPS.filter(function (s) { return s !== ai && !s.ai; })).slice(0, 5);
+  var set = shuffle([ai].concat(rest)), answered = 0, right = 0;
+  app.innerHTML = stationHead(4) +
+    '<p class="lead">Six snippets of Express and pg code. Decide whether each one is safe from SQL injection. At least one was written by an AI assistant that says it is fine. Your first answer to each one counts.</p>' +
+    set.map(function (s, k) {
+      return '<section class="q" id="sp' + k + '" aria-labelledby="sph' + k + '"><h2 id="sph' + k + '" style="font-size:1.1rem">Snippet ' + (k + 1) + ' of 6</h2><pre><code>' + esc(s.code) + '</code></pre><p style="margin:.25rem 0"><strong>Is this code safe from SQL injection?</strong></p><div class="row"><button class="opt" data-a="safe">Safe</button><button class="opt" data-a="unsafe">Unsafe</button></div><div class="qfb" aria-live="polite"></div></section>';
+    }).join('') + finishBar(4);
+  set.forEach(function (s, k) {
+    var box = document.getElementById('sp' + k), btns = box.querySelectorAll('.opt');
+    btns.forEach(function (b) {
+      b.onclick = function () {
+        var said = b.dataset.a === 'safe', ok = said === s.safe;
+        if (ok) { right++; }
+        answered++;
+        btns.forEach(function (x) {
+          x.disabled = true; var isAns = (x.dataset.a === 'safe') === s.safe;
+          if (isAns) { x.classList.add('right'); x.insertAdjacentHTML('beforeend', '<span class="why">Correct answer</span>'); }
+          else if (x === b) { x.classList.add('wrong'); x.insertAdjacentHTML('beforeend', '<span class="why">Your answer</span>'); }
+        });
+        box.querySelector('.qfb').innerHTML = '<div class="fb ' + (ok ? 'ok' : 'no') + '"><strong class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct.' : 'Not quite.') + ' This code is ' + (s.safe ? 'SAFE' : 'UNSAFE') + '.</strong> ' + s.e + '</div>';
+        if (answered === set.length) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'All six answered. Finish when you are ready.'; }
+      };
+    });
+  });
+  document.getElementById('finish').onclick = function () { done(4, right / set.length * 100, right + ' of 6 snippets judged correctly.'); };
+  wireBack(); focusTop();
+}
+
+var STATION_FN = [stationRecon, function () { attackStation(1); }, function () { attackStation(2); }, stationLock, stationSpot];
+
+/* ---------- certificate and verify ---------- */
+function codeFor(name, sc, stamp) { return fnv([name.trim().toLowerCase(), sc.join('-'), stamp, SECRET].join('|')).toString(36).toUpperCase().slice(-8).padStart(8, '0'); }
+function p2(n) { return (n < 10 ? '0' : '') + n; }
+function certificate() {
+  var name = (G.name || '').trim();
+  if (!name) { document.getElementById('nmerr').textContent = 'Type your name first.'; document.getElementById('nm').focus(); return; }
+  var d = new Date(), stamp = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  var sc = G.best.map(function (b) { return b || 0; }), code = codeFor(name, sc, stamp), all = overall();
+  var c = document.createElement('canvas'); c.width = 1000; c.height = 680; var x = c.getContext('2d');
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, 1000, 680);
+  x.fillStyle = '#1f5f2a'; x.fillRect(0, 0, 1000, 120); x.fillStyle = '#8cc84b'; x.fillRect(0, 120, 1000, 10);
+  x.fillStyle = '#e2efdf'; x.font = 'bold 20px Arial'; x.fillText('APC 440  •  MODULE 13  •  SHOW WHAT YOU KNOW', 40, 48);
+  x.fillStyle = '#ffffff'; x.font = 'bold 44px Arial'; x.fillText('Break In, Lock It Down', 40, 98);
+  x.fillStyle = '#16211a'; x.font = 'bold 38px Arial'; x.fillText(name.slice(0, 40), 40, 190);
+  STATIONS.forEach(function (s, i) { x.font = '24px Arial'; x.fillText((i + 1) + '. ' + s.name + ':', 40, 250 + i * 44); x.font = 'bold 24px Arial'; x.fillText(sc[i] + '%', 460, 250 + i * 44); });
+  x.font = 'bold 34px Arial'; x.fillStyle = '#1f5f2a'; x.fillText('Overall: ' + all + '%', 40, 500);
+  x.fillStyle = '#16211a'; x.font = '22px Arial'; x.fillText('Saved: ' + stamp, 40, 560);
+  x.font = 'bold 30px Consolas, monospace'; x.fillText('Code: ' + code, 40, 616);
+  x.strokeStyle = '#1f5f2a'; x.lineWidth = 6; x.strokeRect(3, 3, 994, 674);
+  var a = document.createElement('a'); a.download = 'APC440-M13-Break-In-Lock-It-Down-' + name.replace(/[^a-z0-9]+/gi, '-') + '.png'; a.href = c.toDataURL('image/png');
+  document.body.appendChild(a); a.click(); a.remove();
+  document.getElementById('nmerr').textContent = '';
+  var old = document.getElementById('certmsg'); if (old) { old.remove(); }
+  var m = document.createElement('p'); m.id = 'certmsg'; m.setAttribute('role', 'status'); m.style.fontWeight = '700'; m.textContent = 'Certificate downloaded. Upload it to the Canvas assignment.'; document.getElementById('cert').after(m);
+}
+function verify() {
+  app.innerHTML = '<h1>Instructor check</h1><p>Type the values exactly as they appear on the certificate image.</p>' +
+    '<label for="v-n">Name</label><input type="text" id="v-n">' +
+    STATIONS.map(function (s, i) { return '<label for="v-' + i + '">' + (i + 1) + '. ' + esc(s.name) + ' (percent, 0 to 100)</label><input type="number" id="v-' + i + '" min="0" max="100">'; }).join('') +
+    '<label for="v-s">Saved (for example 2027-04-26 09:05)</label><input type="text" id="v-s"><label for="v-c">Code</label><input type="text" id="v-c">' +
+    '<p style="margin-top:12px"><button id="v-go">Check</button></p><p id="v-out" role="status" style="font-weight:700;font-size:1.2rem"></p>';
+  document.getElementById('v-go').onclick = function () {
+    var sc = [0, 1, 2, 3, 4].map(function (i) { return parseInt(document.getElementById('v-' + i).value, 10) || 0; });
+    var ok = norm(codeFor(document.getElementById('v-n').value, sc, document.getElementById('v-s').value.trim())) === norm(document.getElementById('v-c').value);
+    var all = Math.round(sc.reduce(function (a, b) { return a + b; }, 0) / 5);
+    document.getElementById('v-out').textContent = ok ? 'MATCH. The certificate is genuine. Overall: ' + all + '%.' : 'NO MATCH. Check your typing, or the image was changed.';
+  };
+  focusTop();
+}
+
+/* ---------- start ---------- */
+initSqlJs({ locateFile: function (f) { return f; } }).then(function (lib) {
+  SQLLIB = lib; seed();
+  if (/[?&]verify\b/.test(location.search)) { verify(); } else { home(); }
+}).catch(function (e) {
+  app.innerHTML = '<h1>The practice database did not load</h1><p>Reload the page. If it still does not load, try another browser, and tell your instructor this message: ' + esc(e.message) + '</p>';
+});
+if (/[?&]test\b/.test(location.search)) { window.__swyk = { G: G, FLAGS: FLAGS, LIST: LIST, LOGIN: LOGIN, run: function (s, v) { return run(s, v); } }; }
+})();
+</script>
+</body>
+</html>
