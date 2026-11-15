@@ -69,6 +69,18 @@ thead th{background:#1f5f2a;color:#ffffff}
 details.hint{background:#ffffff;border:2px solid #cfdccc;border-radius:10px;padding:.5rem .9rem;margin:.5rem 0}
 details.hint summary{cursor:pointer;font-weight:700;color:#1f5f2a}
 pre{white-space:pre-wrap;word-break:break-word}
+details.guide{background:#ffffff;border:2px solid #1f5f2a;border-radius:14px;padding:.25rem 1.1rem .75rem;margin:1rem 0}
+details.guide>summary{cursor:pointer;font-weight:800;color:#1f5f2a;font-size:1.1rem;padding:.5rem 0}
+details.guide h3{font-size:1rem;margin:1rem 0 .35rem}
+dl.gloss{margin:.5rem 0}
+dl.gloss dt{font-weight:800;margin-top:.5rem}
+dl.gloss dd{margin:0 0 0 1rem;color:#3f5045}
+ol.stairs{padding-left:1.4rem}
+ol.stairs li{margin:.6rem 0}
+ol.stairs button{margin-left:.4rem;padding:.3rem .9rem;font-size:.95rem}
+.check3{background:#e2efdf;border-radius:12px;padding:.75rem 1.1rem;margin:1rem 0;color:#16211a}
+.check3 h2,.check3 h3{margin:0 0 .35rem;font-size:1.05rem;color:#1f5f2a}
+.check3 ol{margin:.25rem 0 0;padding-left:1.4rem}
 h1[tabindex="-1"]:focus{outline:none}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
@@ -254,6 +266,60 @@ function wireMc(id, q, onDone) {
   });
 }
 
+/* ---------- learning supports ---------- */
+var WORDS = [
+  ['Query', 'A request to the database, written in SQL. <code>SELECT</code> asks for rows.'],
+  ['WHERE', 'Picks which rows come back. A row is returned only when its whole WHERE condition is true.'],
+  ['AND, OR', 'AND: both sides must be true. OR: either side can be true. SQL checks AND before OR, the way math does multiplication before addition.'],
+  ['1=1', 'A comparison that is true for every row.'],
+  ['String', "Text inside single quotes, like <code>'kmarsh'</code>. The next single quote ends the string."],
+  ['Comment', 'Two dashes, <code>--</code>, tell the database to ignore the rest of the line.'],
+  ['SQL injection', 'Visitor input gets pasted into a query and changes what the query does.'],
+  ['Parameterized query', 'A query with placeholders like <code>$1</code>. The values travel separately and are never read as SQL. Your Lab 13 code already does this.'],
+  ['Validation', 'Checking input before you use it, like &ldquo;lesson must be a whole number from 1 to 7.&rdquo;']
+];
+function wordList() { return '<dl class="gloss">' + WORDS.map(function (w) { return '<dt>' + w[0] + '</dt><dd>' + w[1] + '</dd>'; }).join('') + '</dl>'; }
+function reminder() { return '<details class="hint"><summary>Need a reminder? Open the word list</summary>' + wordList() + '</details>'; }
+function guide(html) { return '<details class="guide" open><summary>Station guide: read this first</summary>' + html + '</details>'; }
+var TRUTH = '<table><caption>How the database checks two rows for <code>approved = 1 AND lesson = 3 OR 1=1</code></caption><thead><tr><th scope="col">Row</th><th scope="col">approved = 1 AND lesson = 3</th><th scope="col">OR 1=1</th><th scope="col">Shown?</th></tr></thead><tbody>' +
+  '<tr><th scope="row">id 1: approved, lesson 3</th><td>true AND true = true</td><td>true OR true</td><td><strong>Yes</strong></td></tr>' +
+  '<tr><th scope="row">id 9: hidden draft, lesson 2</th><td>false AND false = false</td><td>false OR true</td><td><strong>Yes</strong>, even though it is hidden</td></tr></tbody></table>';
+var CHECK3 = '<div class="check3"><p style="margin:0 0 .35rem;font-weight:800;color:#1f5f2a">Three questions to ask about any query</p><ol>' +
+  '<li>Does anything the visitor typed get <strong>pasted into the SQL text</strong>, with <code>${...}</code> or <code>+</code>? If yes: unsafe.</li>' +
+  '<li>Does every visitor value travel separately, as <code>$1</code>, <code>$2</code>, with a values array? If yes: that value is safe.</li>' +
+  '<li>Is input checked (validated) before the query runs? Good extra protection, but it is never a replacement for question 2.</li></ol></div>';
+
+function primer() {
+  app.innerHTML = '<span class="pill">Start here &bull; Not scored</span><h1>SQL injection in five minutes</h1>' +
+    '<p class="lead">Read this before Station 1. Every station uses these five ideas, and you can come back here any time from the missions page.</p>' +
+    '<section class="card" aria-labelledby="g1"><h2 id="g1">1. A query is a sentence for the database</h2>' +
+    '<pre><code>SELECT id, lesson, message FROM feedback WHERE approved = 1 AND lesson = 3</code></pre>' +
+    '<p>Read it out loud: <strong>show</strong> the id, lesson, and message <strong>from</strong> the feedback table, but only the rows <strong>where</strong> the feedback is approved <strong>and</strong> the lesson is 3.</p></section>' +
+    '<section class="card" aria-labelledby="g2"><h2 id="g2">2. AND, OR, and &ldquo;always true&rdquo;</h2>' +
+    '<p><strong>AND</strong> needs both sides true. <strong>OR</strong> needs only one side true. <code>1=1</code> is true for every row. SQL checks AND before OR, just like math does multiplication before addition. So <code>approved = 1 AND lesson = 3 OR 1=1</code> means <code>(approved = 1 AND lesson = 3) OR 1=1</code>.</p>' + TRUTH + '</section>' +
+    '<section class="card" aria-labelledby="g3"><h2 id="g3">3. Quotes and comments</h2>' +
+    "<p>Text values go inside single quotes: <code>username = 'kmarsh'</code>. The next single quote <strong>ends</strong> the text. Two dashes, <code>--</code>, start a comment: the database ignores the rest of the line.</p>" +
+    "<pre><code>WHERE username = 'kmarsh' -- AND password_hash = '...'</code></pre><p>Everything after <code>--</code> is ignored, so this only checks the username.</p></section>" +
+    '<section class="card" aria-labelledby="g4"><h2 id="g4">4. Fill in the blank: how injection happens</h2>' +
+    '<p>This code builds the query like a fill-in-the-blank sentence. Whatever the visitor types goes where <code>${lesson}</code> is:</p>' +
+    '<pre><code>const sql = `SELECT ... WHERE approved = 1 AND lesson = ${lesson}`;</code></pre>' +
+    '<p>Try it. Type <code>5</code>, then try <code>5 OR 1=1</code>. Nothing runs here: this box only shows the sentence the database would get.</p>' +
+    '<label for="blank">What the visitor types</label><div class="row"><input type="text" id="blank" value="5" style="max-width:16rem"><button id="blankgo">Show the SQL</button></div><div id="blankout" aria-live="polite"></div>' +
+    '<p>The database cannot tell which words came from the code and which came from the visitor. If the visitor types SQL words like <code>OR</code>, a quote, or <code>--</code>, the database obeys them. That is SQL injection.</p></section>' +
+    '<section class="card" aria-labelledby="g5"><h2 id="g5">5. The fix: a sealed envelope</h2>' +
+    '<p>A parameterized query leaves a placeholder, <code>$1</code>, and sends the value separately, like a sealed envelope. The database fills in the value only after it has read the SQL, so the value can never become SQL. This is exactly what your Lab 13 <code>feedback.js</code> does.</p>' +
+    "<pre><code>// UNSAFE: the value is pasted into the SQL text\nquery(`SELECT ... WHERE lesson = ${lesson}`);\n\n// SAFE: the value travels separately as $1\nquery('SELECT ... WHERE lesson = $1', [lesson]);</code></pre>" + CHECK3 + '</section>' +
+    '<section class="card" aria-labelledby="g6"><h2 id="g6">Word list</h2>' + wordList() + '</section>' +
+    '<div class="row"><button id="s1">Start Station 1</button><button class="btn-alt" id="back">Back to the missions</button></div>';
+  document.getElementById('blankgo').onclick = function () {
+    var v = document.getElementById('blank').value, isNum = /^\s*\d+\s*$/.test(v);
+    document.getElementById('blankout').innerHTML = '<span class="lbl">The SQL the database would get</span><pre><code>' + esc('SELECT ... WHERE approved = 1 AND lesson = ') + '<mark class="inj"><span class="sr-only">[visitor input:] </span>' + esc(v) + '<span class="sr-only"> [end of visitor input]</span></mark></code></pre>' +
+      '<p><strong>' + (isNum ? 'Just a lesson number: the sentence means what the programmer meant.' : 'The visitor&rsquo;s words are now part of the sentence. The database reads them as SQL.') + '</strong></p>';
+  };
+  document.getElementById('s1').onclick = stationRecon;
+  wireBack(); focusTop();
+}
+
 /* ---------- state ---------- */
 var STATIONS = [
   { name: 'Recon: read the query', topic: 'How your input becomes SQL' },
@@ -273,7 +339,8 @@ function home() {
     '<span class="pill">Module 13 &bull; Show What You Know</span><h1>Break In, Lock It Down</h1>' +
     '<p class="lead">This is a practice copy of your Learn Node on Node site, with a real database running inside this tab. First you break in with SQL injection. Then you lock it down, the same way your Lab 13 code already does.</p>' +
     '<section class="note" aria-labelledby="eth"><h2 id="eth" style="color:#6b3600;font-size:1.1rem;margin:0 0 .25rem">Attack only what you own</h2><p style="margin:0">Use these skills only on sites you own or have written permission to test. Trying them on anyone else&rsquo;s site is illegal. Everything here is a practice copy built to be broken.</p></section>' +
-    '<p>Work the five stations in order. Replay any station as often as you like: your <strong>best percent at each station is kept</strong> until you reload this page.</p>' +
+    '<section class="card" aria-labelledby="sh"><h2 id="sh">New to SQL injection? Start here</h2><p style="margin:0 0 .75rem">A five-minute guide to queries, AND and OR, quotes, comments, and the fix. It is not scored, and every station builds on it.</p><button id="primer">Read the Start here guide</button></section>' +
+    '<p>Then work the five stations in order. Every station opens with a short guide. Replay any station as often as you like: your <strong>best percent at each station is kept</strong> until you reload this page.</p>' +
     '<div class="tiles">' + STATIONS.map(function (s, i) {
       var b = G.best[i];
       return '<button class="tile" data-go="' + i + '"><span class="nm">' + (i + 1) + '. ' + esc(s.name) + '</span><span class="tp">' + esc(s.topic) + '</span><span class="sc' + (b === 100 ? ' full' : '') + '">' + (b === null ? 'Not played yet' : 'Best: ' + b + '%' + (b === 100 ? ' (perfect)' : '')) + '</span></button>';
@@ -283,6 +350,7 @@ function home() {
     '<button id="cert"' + (played ? '' : ' disabled') + '>Download my certificate</button>' +
     '<p style="margin:.75rem 0 0">Upload the certificate image to the Canvas assignment. Your results reset if you reload this page, so download it before you leave.</p></section>';
   app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { STATION_FN[+b.dataset.go](); }; });
+  document.getElementById('primer').onclick = primer;
   var nm = document.getElementById('nm'); nm.value = G.name; nm.oninput = function () { G.name = nm.value; document.getElementById('nmerr').textContent = ''; };
   document.getElementById('cert').onclick = certificate;
   focusTop();
@@ -312,11 +380,15 @@ function stationRecon() {
   app.innerHTML = stationHead(0) +
     '<p class="lead">Before you attack, read the code. This is the practice copy&rsquo;s lesson filter: <code>GET /api/feedback?lesson=3</code>. It looks a lot like your Lab 13 code, with one small difference that matters.</p>' +
     '<p>This practice copy also has one feature your site does not: new feedback waits for the instructor to approve it. Unapproved feedback is supposed to stay hidden.</p>' +
+    guide('<ul><li>The code builds the SQL by pasting what you type where <code>${lesson}</code> is.</li>' +
+      '<li>In <strong>The SQL the server ran</strong>, the highlighted part is what you typed. Everything else came from the code.</li>' +
+      '<li><strong>HTTP 500</strong> means the server hit an error. Your server terminal shows why. If the error mentions what you typed, the database tried to read your input as SQL.</li>' +
+      '<li>New to WHERE, AND, and OR? Open the word list below, or go back and read the Start here guide.</li></ul>' + wordList()) +
     codeBlock('feedback.js (practice copy)', LIST.vuln.code) +
     '<section class="demo" aria-labelledby="try1"><h2 id="try1">Try it live</h2><ul class="tasks" aria-live="polite" id="tasks"></ul>' +
     '<label for="lesson">Show feedback for lesson</label><div class="row"><input type="text" id="lesson" value="3" style="max-width:14rem"><button id="go">Send the request</button></div>' +
     '<p class="demo-endpoint" id="ep" style="margin-top:.5rem"></p><div id="out"></div></section>' +
-    '<section aria-labelledby="qs"><h2 id="qs">What did you see?</h2><p id="lock">Do both tasks in the Try it live box to unlock these questions.</p><div id="qbox"></div></section>' + finishBar(0);
+    '<section aria-labelledby="qs"><h2 id="qs">What did you see?</h2><p id="lock">Do both tasks in the Try it live box to unlock these questions.</p>' + reminder() + '<div id="qbox"></div></section>' + finishBar(0);
   function tasks() {
     document.getElementById('tasks').innerHTML =
       '<li><span aria-hidden="true">' + (did.ok ? '&#10003;' : '&#9744;') + ' </span>' + (did.ok ? '<strong>Done:</strong> ' : '<strong>To do:</strong> ') + 'send lesson <code>3</code> and read the SQL the server ran.</li>' +
@@ -375,14 +447,24 @@ function attackStation(i, cfg) {
     ? '<label for="lesson">Show feedback for lesson</label><div class="row"><input type="text" id="lesson" value="3" style="max-width:20rem"><button id="go">Send the request</button></div>'
     : '<label for="un">Username</label><input type="text" id="un" autocomplete="off" spellcheck="false"><label for="pw">Password</label><input type="password" id="pw" autocomplete="off"><p style="margin:.6rem 0 0"><button id="go">Log in</button></p>';
   var q = isLeak ? LEAK : LOGINQ;
-  app.innerHTML = stationHead(i) + intro +
+  var stairs = isLeak
+    ? guide('<p>Climb these stairs. Send each one, then read the SQL the server ran before you go on.</p><ol class="stairs">' +
+        '<li><code>5</code> <button data-s="5">Try it</button><br>An honest request for a different lesson. Only approved feedback comes back.</li>' +
+        '<li><code>3 OR lesson = 6</code> <button data-s="3 OR lesson = 6">Try it</button><br>OR adds a second condition. Look closely at the lesson 6 rows: one of them was never approved. AND is checked first, so the approved check only guards the left side of OR.</li>' +
+        '<li>Now make the right side of OR true for <strong>every</strong> row, not just lesson 6. Which comparison is always true? Type it yourself.</li></ol><p>Stuck? The Start here guide explains how AND and OR are checked, and the hint button below gives three more nudges.</p>')
+    : guide('<p>Climb these stairs. Each one shows you a little more.</p><ol class="stairs">' +
+        '<li>Log in honestly as <code>kmarsh</code> with <code>lesson7rocks</code>. <button data-u="kmarsh" data-p="lesson7rocks">Try it</button><br>Read the SQL. Your username sits inside single quotes.</li>' +
+        '<li>Username <code>kmarsh&#39; --</code> with the password <code>wrong</code>. <button data-u="kmarsh&#39; --" data-p="wrong">Try it</button><br>Your quote ends the username text early. The <code>--</code> turns the password check into a comment. Did you get in without the right password?</li>' +
+        '<li>Now do the same thing to the instructor account. You know its username. Type it yourself.</li></ol>' +
+        "<p>Another way in: a username of <code>' OR '1'='1' --</code> makes the WHERE true for every user, and the first user in the table is the instructor.</p>");
+  app.innerHTML = stationHead(i) + intro + stairs +
     codeBlock(isLeak ? 'feedback.js (practice copy)' : 'auth.js (practice copy)', isLeak ? LIST.vuln.code : LOGIN.vuln.code) +
     '<section aria-labelledby="pr"><h2 id="pr">Predict first</h2>' + mcHtml('pred', { q: q.predict.q, o: q.predict.o }) + '</section>' +
     '<section class="demo" aria-labelledby="atk"><h2 id="atk">Try it live</h2>' + form +
     '<p class="demo-endpoint" id="ep" style="margin-top:.5rem"></p><div id="out"></div><div id="dash"></div>' +
     '<div class="row" style="margin-top:.5rem"><button class="btn-alt" id="hint">Show a hint</button><button class="btn-alt" id="reset">Reset the database</button></div><div id="hints" aria-live="polite"></div></section>' +
     '<section aria-labelledby="fl"><h2 id="fl">Prove it: the flag</h2><label for="flag">Flag code you found</label><div class="row"><input type="text" id="flag" style="max-width:14rem" autocomplete="off"><button id="flagbtn">Check the flag</button></div><div id="flagfb" aria-live="polite"></div></section>' +
-    '<section aria-labelledby="ex"><h2 id="ex">Explain it</h2><p id="exlock">Capture the flag, or use all three hints, to unlock these questions.</p><div id="qbox"></div></section>' + finishBar(i);
+    '<section aria-labelledby="ex"><h2 id="ex">Explain it</h2><p id="exlock">Capture the flag, or use all three hints, to unlock these questions.</p>' + reminder() + '<div id="qbox"></div></section>' + finishBar(i);
   // prediction (not scored): record the choice
   var pbtns = document.querySelectorAll('#pred .opt');
   pbtns.forEach(function (b) { b.onclick = function () { predicted = q.predict.o[+b.dataset.i]; pbtns.forEach(function (x) { x.disabled = true; if (x === b) { x.classList.add('right'); x.insertAdjacentHTML('beforeend', '<span class="why">Your prediction</span>'); } }); document.querySelector('#pred .qfb').innerHTML = '<div class="fb ok"><strong class="ok">Saved.</strong> Predictions are not scored. Now try it and see if you were right.</div>'; }; });
@@ -407,18 +489,33 @@ function attackStation(i, cfg) {
     document.getElementById('out').innerHTML = responseHtml(res);
     var dash = document.getElementById('dash'); dash.innerHTML = '';
     if (isLeak && leaked(res)) {
-      G.payloads.leak = attempt;
-      dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">You got the hidden rows.</h3><p style="margin:0">Find the flag inside the instructor draft, then type it into the flag box.' + (predicted ? ' You predicted: <strong>' + predicted + '</strong>.' : '') + '</p></div>';
+      var gotFlag = res.body.some(function (r) { return r.id === 9; });
+      if (gotFlag) {
+        G.payloads.leak = attempt;
+        dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">You got the hidden rows.</h3><p style="margin:0">Find the flag inside the instructor draft, then type it into the flag box.' + (predicted ? ' You predicted: <strong>' + predicted + '</strong>.' : '') + '</p></div>';
+      } else {
+        dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">You got a hidden row.</h3><p style="margin:0">Feedback that was never approved just came back. The flag is in a different hidden post. Can you make the filter return <strong>every</strong> row?</p></div>';
+      }
     }
     if (!isLeak && res.status === 200) {
       if (res.body.role === 'instructor') {
         if (attempt !== 'apc440-admin') { G.payloads.login = attempt; }
         dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">Instructor dashboard</h3><p style="margin:0 0 .4rem">Welcome back, ' + esc(res.body.welcome) + '. 3 feedback posts are waiting for your approval.</p><p style="margin:0">Staff flag: <span class="flag">' + FLAGS.login + '</span></p>' + (predicted ? '<p style="margin:.4rem 0 0">You predicted: <strong>' + predicted + '</strong>.</p>' : '') + '</div>';
+      } else if (attempt !== res.body.welcome) {
+        dash.innerHTML = '<div class="dash"><h3 style="margin:0 0 .25rem">You got in as ' + esc(res.body.welcome) + ' without the right password.</h3><p style="margin:0">Your quote ended the username text, and <code>--</code> turned the password check into a comment. That is a student account, though. Now try it on the instructor account.</p></div>';
       } else {
         dash.innerHTML = '<div class="fb ok"><strong class="ok">Logged in as ' + esc(res.body.welcome) + ' (student).</strong> That is an honest login. Read the SQL above, then go after the instructor account.</div>';
       }
     }
   };
+  app.querySelectorAll('.stairs button').forEach(function (b) {
+    b.onclick = function () {
+      if (isLeak) { document.getElementById('lesson').value = b.dataset.s; }
+      else { document.getElementById('un').value = b.dataset.u; document.getElementById('pw').value = b.dataset.p; }
+      document.getElementById('go').click();
+      document.getElementById('atk').scrollIntoView();
+    };
+  });
   document.getElementById('hint').onclick = function () {
     if (hintsUsed >= 3) { return; }
     hintsUsed++;
@@ -433,7 +530,7 @@ function attackStation(i, cfg) {
     else { fb.innerHTML = '<div class="fb no"><strong class="no">Not that one.</strong> Copy the flag code exactly as it appears, for example ' + (isLeak ? 'LEAK-' : 'ADMIN-') + 'followed by four characters.</div>'; }
   };
   document.getElementById('finish').onclick = function () {
-    var flagPts = flagOk ? Math.max(30, 60 - 10 * hintsUsed) : 0, qPts = right * 20;
+    var flagPts = flagOk ? Math.max(45, 60 - 5 * hintsUsed) : 0, qPts = right * 20;
     done(i, flagPts + qPts, (flagOk ? 'Flag captured with ' + hintsUsed + ' hint' + (hintsUsed === 1 ? '' : 's') + ': ' + flagPts + ' of 60. ' : 'No flag this round: 0 of 60. ') + 'Explain it: ' + qPts + ' of 40.');
   };
   wireBack(); focusTop();
@@ -483,7 +580,7 @@ function fixPart(id, title, intro, table, variants, battery, onDone) {
       card.querySelector('.res').innerHTML = batteryTable(rows, 'Your attacks against this version') +
         '<div class="fb ' + (ok ? 'ok' : 'no') + '"><strong class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'FIXED.' : 'WRONG: this version is still open.') + '</strong> ' + table[v].why + '</div>';
       b.disabled = true;
-      if (ok || tries >= 2) {
+      if (ok || tries >= 3) {
         finished = true;
         box.querySelectorAll('button[data-v]').forEach(function (x) { x.disabled = true; });
         if (!ok) {
@@ -491,7 +588,7 @@ function fixPart(id, title, intro, table, variants, battery, onDone) {
           fixedCard.classList.add('picked-right');
           fixedCard.querySelector('.res').innerHTML = batteryTable(battery('fixed'), 'The same attacks against the fixed version') + '<div class="fb ok"><strong class="ok">This is the fix.</strong> ' + table.fixed.why + '</div>';
         }
-        onDone(ok ? (tries === 1 ? 50 : 25) : 0);
+        onDone(ok ? [0, 50, 25, 10][tries] : 0);
       }
     };
   });
@@ -499,7 +596,7 @@ function fixPart(id, title, intro, table, variants, battery, onDone) {
 function stationLock() {
   var pts = [null, null];
   app.innerHTML = stationHead(3) +
-    '<p class="lead">You broke in twice. Now fix both handlers. Read each version, pick the one you trust, and the station reruns real attacks against it, including the ones that worked for you. Full credit on the first try, half credit on the second.</p>' +
+    '<p class="lead">You broke in twice. Now fix both handlers. Read each version, pick the one you trust, and the station reruns real attacks against it, including the ones that worked for you. Full credit on the first try, half on the second, and a little on the third.</p>' + guide('<p>For each option, ask the three questions below. Then read the results table: <strong>Works</strong> means honest visitors still get in, and <strong>Blocked</strong> means the attack failed. A safe version must block every attack <em>and</em> keep working for honest visitors.</p>' + CHECK3) +
     '<section class="card" id="partA"></section><section class="card" id="partB"></section>' + finishBar(3);
   function check() { if (pts[0] !== null && pts[1] !== null) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'Both handlers are locked down. Finish when you are ready.'; } }
   fixPart('partA', 'Part 1: the lesson filter', 'Which version of <code>listFeedback</code> stops the leak and still works for honest visitors?', LIST, ['quotes', 'escape', 'fixed'], leakBattery, function (p) { pts[0] = p; check(); });
@@ -525,7 +622,7 @@ function stationSpot() {
   var rest = shuffle(SNIPS.filter(function (s) { return s !== ai && !s.ai; })).slice(0, 5);
   var set = shuffle([ai].concat(rest)), answered = 0, right = 0;
   app.innerHTML = stationHead(4) +
-    '<p class="lead">Six snippets of Express and pg code. Decide whether each one is safe from SQL injection. At least one was written by an AI assistant that says it is fine. Your first answer to each one counts.</p>' +
+    '<p class="lead">Six snippets of Express and pg code. Decide whether each one is safe from SQL injection. At least one was written by an AI assistant that says it is fine. Your first answer to each one counts.</p>' + guide(CHECK3 + '<p>A template literal or <code>+</code> is only dangerous when it puts <strong>visitor input</strong> into the SQL. Ask where each value came from: the visitor (<code>req.query</code>, <code>req.params</code>, <code>req.body</code>) or the programmer.</p>') +
     set.map(function (s, k) {
       return '<section class="q" id="sp' + k + '" aria-labelledby="sph' + k + '"><h2 id="sph' + k + '" style="font-size:1.1rem">Snippet ' + (k + 1) + ' of 6</h2><pre><code>' + esc(s.code) + '</code></pre><p style="margin:.25rem 0"><strong>Is this code safe from SQL injection?</strong></p><div class="row"><button class="opt" data-a="safe">Safe</button><button class="opt" data-a="unsafe">Unsafe</button></div><div class="qfb" aria-live="polite"></div></section>';
     }).join('') + finishBar(4);

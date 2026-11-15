@@ -3,7 +3,10 @@
 APC 440 Web Development, Module 13 Show What You Know.
 
 A practice copy of the students' Learn Node on Node site with a real SQLite
-database running in the browser (sql.js). Students:
+database running in the browser (sql.js). A short, unscored **Start here** guide
+teaches the background (queries, AND and OR, quotes and comments, how
+injection happens, and the `$1` fix). Every station opens with its own guide.
+Students:
 
 1. **Recon: read the query.** See how their input becomes part of the SQL.
 2. **The leak.** Use `OR 1=1` on the lesson filter to show unapproved feedback and capture a flag.
@@ -11,7 +14,8 @@ database running in the browser (sql.js). Students:
 4. **Lock it down.** Pick the safe version of each handler; the page reruns real attacks against their choice.
 5. **Spot the hole.** Judge six Express and pg snippets as safe or unsafe, including AI-written code.
 
-Scores are percents only, so each course can assign its own points. The best
+Hints cost 5% each in stations 2 and 3, and station 4 allows three tries
+(50, 25, then 10 per part). Scores are percents only, so each course can assign its own points. The best
 percent per station is kept until the page reloads. Students download a
 certificate PNG with a verification code and upload it to Canvas.
 
