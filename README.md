@@ -16,7 +16,10 @@ Students:
 
 Hints cost 5% each in stations 2 and 3, and station 4 allows three tries
 (50, 25, then 10 per part). Scores are percents only, so each course can assign its own points. The best
-percent per station is kept until the page reloads. Students download a
+percent per station is kept until the page reloads. A progress line under
+**Finish** lists what is left. Selecting Finish early, or leaving a started
+station, opens a checklist with **Go to it** links and an option to submit the
+partial percent (it can never lower a best). Students download a
 certificate PNG with a verification code and upload it to Canvas.
 
 ## Publish

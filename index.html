@@ -82,6 +82,16 @@ ol.stairs button{margin-left:.4rem;padding:.3rem .9rem;font-size:.95rem}
 .check3 h2,.check3 h3{margin:0 0 .35rem;font-size:1.05rem;color:#1f5f2a}
 .check3 ol{margin:.25rem 0 0;padding-left:1.4rem}
 h1[tabindex="-1"]:focus{outline:none}
+/* learn-node.css shows a "busy" spinner on disabled buttons; nothing here is loading */
+button:disabled{cursor:not-allowed}
+dialog.wip{max-width:36rem;width:calc(100% - 2rem);border:3px solid #1f5f2a;border-radius:14px;padding:1.1rem 1.25rem 1.25rem;color:#16211a;background:#ffffff}
+dialog.wip::backdrop{background:rgba(22,33,26,.55)}
+dialog.wip h2{margin:0 0 .5rem;font-size:1.25rem;color:#16211a}
+ul.todo{list-style:none;padding:0;margin:.5rem 0 1rem}
+ul.todo li{padding:.5rem 0;border-top:1px solid #cfdccc}
+ul.todo li:last-child{border-bottom:1px solid #cfdccc}
+ul.todo .goto{margin-left:.4rem;padding:.2rem .8rem;font-size:.9rem}
+.wipscore{background:#fff4e5;border-radius:10px;padding:.6rem .9rem;margin:0 0 1rem;color:#16211a}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 </head>
@@ -334,6 +344,7 @@ function saveScore(i, pct) { pct = Math.max(0, Math.min(100, Math.round(pct))); 
 
 /* ---------- home ---------- */
 function home() {
+  CUR = null;
   var played = G.best.some(function (b) { return b !== null; });
   app.innerHTML =
     '<span class="pill">Module 13 &bull; Show What You Know</span><h1>Break In, Lock It Down</h1>' +
@@ -347,7 +358,8 @@ function home() {
     }).join('') + '</div>' +
     '<section class="sun" aria-labelledby="sf"><h2 id="sf">Your results so far</h2><p style="margin:0 0 .5rem"><strong>Overall: ' + overall() + '%</strong>, the average of all five stations. A station you have not played counts as 0%.</p>' +
     '<label for="nm">Your name, as it appears in Canvas</label><input type="text" id="nm" autocomplete="name"><p class="err" id="nmerr" role="alert"></p>' +
-    '<button id="cert"' + (played ? '' : ' disabled') + '>Download my certificate</button>' +
+    '<button id="cert"' + (played ? '' : ' disabled aria-describedby="certnote"') + '>Download my certificate</button>' +
+    (played ? '' : '<p class="prog" id="certnote" style="margin:.4rem 0 0">Play at least one station to unlock your certificate.</p>') +
     '<p style="margin:.75rem 0 0">Upload the certificate image to the Canvas assignment. Your results reset if you reload this page, so download it before you leave.</p></section>';
   app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { STATION_FN[+b.dataset.go](); }; });
   document.getElementById('primer').onclick = primer;
@@ -356,12 +368,95 @@ function home() {
   focusTop();
 }
 function stationHead(i) { return '<span class="pill">Station ' + (i + 1) + ' of 5</span><h1>' + esc(STATIONS[i].name) + '</h1>'; }
-function finishBar(i) { return '<div class="row" style="margin-top:1.25rem"><button id="finish" disabled>Finish this station</button><button class="btn-alt" id="back">Back to the missions</button></div><p id="finishnote" class="prog" aria-live="polite"></p>'; }
+function finishBar(i) { return '<div class="row" style="margin-top:1.25rem"><button id="finish" aria-describedby="finishnote">Finish this station</button><button class="btn-alt" id="back">Back to the missions</button></div><p id="finishnote" class="prog"></p><p class="sr-only" id="finishlive" aria-live="polite"></p>'; }
 function wireBack() { document.getElementById('back').onclick = home; }
-function done(i, pct, detail) {
+
+/* ---------- progress, the "not done yet" dialog, and partial submit ----------
+   Each station calls track(i, status). status() reports, right now:
+   { items: [{ t: label html, note: optional text, done: bool, go: element id }], pct, detail } */
+var CUR = null;
+function allDone(s) { return s.items.every(function (x) { return x.done; }); }
+function itemText(x) { return x.t + (x.note ? ' (' + x.note + ')' : '') + '.'; }
+function track(i, status) {
+  CUR = { i: i, status: status, all: false, last: '' };
+  document.getElementById('finish').onclick = function () {
+    var s = status();
+    if (allDone(s)) { done(i, s.pct, s.detail); } else { wipDialog('finish', s, this); }
+  };
+  document.getElementById('back').onclick = function () {
+    var s = status();
+    if (s.pct > 0 || s.items.some(function (x) { return x.done; })) { wipDialog('back', s, this); } else { home(); }
+  };
+  refreshFinish();
+}
+function refreshFinish() {
+  if (!CUR || !document.getElementById('finishnote')) { return; }
+  var s = CUR.status(), left = s.items.filter(function (x) { return !x.done; });
+  var html = left.length ? '<strong>Still to do (' + left.length + '):</strong> ' + left.map(itemText).join(' ') : '<strong>All done.</strong> Finish when you are ready.';
+  if (html !== CUR.last) { document.getElementById('finishnote').innerHTML = html; CUR.last = html; }
+  if (!left.length && !CUR.all) { document.getElementById('finishlive').textContent = 'All steps done. You can finish this station.'; }
+  CUR.all = !left.length;
+}
+// every station action is a click inside #app, so one listener keeps the progress line current
+app.addEventListener('click', refreshFinish);
+function goTo(id) {
+  var el = document.getElementById(id); if (!el) { return; }
+  el.scrollIntoView({ block: 'start' });
+  var box = /^H[1-6]$/.test(el.tagName) ? el.parentNode : el; // most targets are a section's heading
+  var f = box.querySelector('.opt:not(:disabled)') || box.querySelector('input:not(:disabled)') || box.querySelector('button:not(:disabled)');
+  if (!f) { el.setAttribute('tabindex', '-1'); f = el; }
+  f.focus({ preventScroll: true });
+}
+function wipDialog(mode, s, opener) {
+  var i = CUR.i, all = allDone(s), pct = Math.max(0, Math.min(100, Math.round(s.pct))), best = G.best[i];
+  var left = s.items.filter(function (x) { return !x.done; });
+  var head = mode === 'finish' ? 'You are not done with this station yet' : 'Leave this station?';
+  var intro = mode === 'finish' ? 'Finish this station when every step below is done. You can also submit what you have now.'
+    : (all ? 'You did every step, but you have not finished. If you leave now, this round is not saved.' : 'You have started this station. If you leave without submitting, this round is not saved.');
+  var h = '<h2 id="wiph">' + head + '</h2><p>' + intro + '</p>';
+  if (!all) {
+    h += '<ul class="todo">' + s.items.map(function (x, k) {
+      return '<li><span aria-hidden="true">' + (x.done ? '&#10003;' : '&#9744;') + ' </span><strong>' + (x.done ? 'Done:' : 'To do:') + '</strong> ' + itemText(x) +
+        (x.done ? '' : ' <button class="btn-alt goto" data-k="' + k + '">Go to it</button>') + '</li>';
+    }).join('') + '</ul>';
+    h += '<p class="wipscore">' + (pct > 0
+      ? 'If you submit now, this round counts as <strong>' + pct + '%</strong>. Only your best percent at each station is kept, so submitting now cannot lower it.'
+      : 'You have not earned any points this round yet, so there is nothing to submit.') +
+      (best !== null ? ' Your best at this station so far: <strong>' + best + '%</strong>.' : '') + '</p>';
+  }
+  var acts = '<button id="wip-keep">Keep working</button>';
+  if (all) { acts += '<button class="btn-alt" id="wip-submit">Finish and save ' + pct + '%</button>'; }
+  else if (pct > 0) { acts += '<button class="btn-alt" id="wip-submit">Submit ' + pct + '% for now</button>'; }
+  if (mode === 'back') { acts += '<button class="btn-alt" id="wip-leave">Leave without saving</button>'; }
+  h += '<div class="row">' + acts + '</div>';
+  var dlg = document.createElement('dialog');
+  dlg.className = 'wip'; dlg.setAttribute('aria-labelledby', 'wiph'); dlg.innerHTML = h;
+  document.body.appendChild(dlg);
+  // clean up right away: the dialog's own close event is queued and can arrive late
+  var closed = false;
+  function closeThen(fn) {
+    if (closed) { return; } closed = true;
+    if (dlg.open) { dlg.close(); } dlg.remove();
+    if (fn) { fn(); } else if (opener && document.body.contains(opener)) { opener.focus(); }
+  }
+  dlg.addEventListener('cancel', function (e) { e.preventDefault(); closeThen(null); }); // Esc means Keep working
+  dlg.addEventListener('close', function () { closeThen(null); });
+  dlg.querySelector('#wip-keep').onclick = function () { closeThen(null); };
+  var sub = dlg.querySelector('#wip-submit');
+  if (sub) { sub.onclick = function () { closeThen(function () { done(i, s.pct, s.detail, all ? null : left); }); }; }
+  var lv = dlg.querySelector('#wip-leave');
+  if (lv) { lv.onclick = function () { closeThen(home); }; }
+  dlg.querySelectorAll('.goto').forEach(function (b) { b.onclick = function () { var id = s.items[+b.dataset.k].go; closeThen(function () { goTo(id); }); }; });
+  dlg.showModal();
+  dlg.querySelector('#wip-keep').focus();
+}
+
+function done(i, pct, detail, left) {
+  CUR = null;
   var got = saveScore(i, pct), best = G.best[i];
-  app.innerHTML = '<span class="pill">Station ' + (i + 1) + ' of 5</span><h1>Station complete: ' + esc(STATIONS[i].name) + '</h1>' +
-    '<div class="sun"><p style="margin:0;font-size:1.2rem"><strong>This round: ' + got + '%.</strong> Your best at this station: <strong>' + best + '%</strong>.</p>' + (detail ? '<p style="margin:.5rem 0 0">' + detail + '</p>' : '') + '</div>' +
+  app.innerHTML = '<span class="pill">Station ' + (i + 1) + ' of 5</span><h1>' + (left ? 'Station submitted early: ' : 'Station complete: ') + esc(STATIONS[i].name) + '</h1>' +
+    '<div class="sun"><p style="margin:0;font-size:1.2rem"><strong>This round: ' + got + '%.</strong> Your best at this station: <strong>' + best + '%</strong>.</p>' + (detail ? '<p style="margin:.5rem 0 0">' + detail + '</p>' : '') +
+    (left ? '<p style="margin:.75rem 0 .25rem"><strong>Submitted early.</strong> Play this station again to finish these steps:</p><ul style="margin:0">' + left.map(function (x) { return '<li>' + x.t + '</li>'; }).join('') + '</ul>' : '') + '</div>' +
     '<div class="row"><button id="again" class="btn-alt">Play this station again</button><button id="back">Back to the missions</button></div>';
   document.getElementById('again').onclick = function () { STATION_FN[i](); };
   wireBack(); focusTop();
@@ -396,7 +491,7 @@ function stationRecon() {
     if (did.ok && did.abc && !document.getElementById('rq0')) {
       document.getElementById('lock').textContent = 'Answer all five. Your first answer to each one counts.';
       document.getElementById('qbox').innerHTML = RECON_Q.map(function (q, k) { return mcHtml('rq' + k, q); }).join('');
-      RECON_Q.forEach(function (q, k) { wireMc('rq' + k, q, function (ok) { answered++; if (ok) { right++; } if (answered === RECON_Q.length) { var f = document.getElementById('finish'); f.disabled = false; document.getElementById('finishnote').textContent = 'All questions answered. Finish when you are ready.'; } }); });
+      RECON_Q.forEach(function (q, k) { wireMc('rq' + k, q, function (ok) { answered++; if (ok) { right++; } }); });
     }
   }
   document.getElementById('go').onclick = function () {
@@ -408,8 +503,20 @@ function stationRecon() {
     if (res.status === 500 && /abc/.test(res.terminal || '')) { did.abc = true; }
     tasks();
   };
-  document.getElementById('finish').onclick = function () { done(0, right / RECON_Q.length * 100, right + ' of ' + RECON_Q.length + ' questions right on the first try.'); };
-  wireBack(); tasks(); focusTop();
+  tasks();
+  track(0, function () {
+    var open = did.ok && did.abc;
+    return {
+      pct: right / RECON_Q.length * 100,
+      detail: right + ' of ' + RECON_Q.length + ' questions right on the first try.',
+      items: [
+        { t: 'Send lesson <code>3</code> and read the SQL the server ran', done: did.ok, go: 'try1' },
+        { t: 'Send <code>abc</code> and read your server terminal', done: did.abc, go: 'try1' },
+        { t: 'Answer the five What did you see? questions', note: open ? answered + ' of ' + RECON_Q.length + ' answered' : 'they unlock after both tasks', done: answered === RECON_Q.length, go: open ? 'qs' : 'try1' }
+      ]
+    };
+  });
+  focusTop();
 }
 
 /* ---------- attack stations (2 and 3) ---------- */
@@ -472,7 +579,7 @@ function attackStation(i, cfg) {
     if (document.getElementById('xq0')) { return; }
     document.getElementById('exlock').textContent = 'Answer both. Your first answer to each one counts.';
     document.getElementById('qbox').innerHTML = q.qs.map(function (x, k) { return mcHtml('xq' + k, x); }).join('');
-    q.qs.forEach(function (x, k) { wireMc('xq' + k, x, function (ok) { answered++; if (ok) { right++; } if (answered === q.qs.length) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'All questions answered. Finish when you are ready.'; } }); });
+    q.qs.forEach(function (x, k) { wireMc('xq' + k, x, function (ok) { answered++; if (ok) { right++; } }); });
   }
   document.getElementById('go').onclick = function () {
     var res, attempt;
@@ -529,11 +636,18 @@ function attackStation(i, cfg) {
     if (norm(got) === norm(want)) { flagOk = true; fb.innerHTML = '<div class="fb ok"><strong class="ok">Flag accepted.</strong> You broke in. Now explain how.</div>'; document.getElementById('flagbtn').disabled = true; unlock(); }
     else { fb.innerHTML = '<div class="fb no"><strong class="no">Not that one.</strong> Copy the flag code exactly as it appears, for example ' + (isLeak ? 'LEAK-' : 'ADMIN-') + 'followed by four characters.</div>'; }
   };
-  document.getElementById('finish').onclick = function () {
-    var flagPts = flagOk ? Math.max(45, 60 - 5 * hintsUsed) : 0, qPts = right * 20;
-    done(i, flagPts + qPts, (flagOk ? 'Flag captured with ' + hintsUsed + ' hint' + (hintsUsed === 1 ? '' : 's') + ': ' + flagPts + ' of 60. ' : 'No flag this round: 0 of 60. ') + 'Explain it: ' + qPts + ' of 40.');
-  };
-  wireBack(); focusTop();
+  track(i, function () {
+    var flagPts = flagOk ? Math.max(45, 60 - 5 * hintsUsed) : 0, qPts = right * 20, open = flagOk || hintsUsed >= 3;
+    return {
+      pct: flagPts + qPts,
+      detail: (flagOk ? 'Flag captured with ' + hintsUsed + ' hint' + (hintsUsed === 1 ? '' : 's') + ': ' + flagPts + ' of 60. ' : 'No flag this round: 0 of 60. ') + 'Explain it: ' + qPts + ' of 40.',
+      items: [
+        { t: flagOk ? 'Capture the flag' : 'Capture the flag, or use all three hints, to unlock the Explain it questions', note: !flagOk && open ? 'unlocked with hints; the flag is still worth points' : '', done: open, go: 'atk' },
+        { t: 'Answer both Explain it questions', note: open ? answered + ' of ' + q.qs.length + ' answered' : 'they unlock after the flag', done: answered === q.qs.length, go: open ? 'ex' : 'atk' }
+      ]
+    };
+  });
+  focusTop();
 }
 
 /* ---------- station 4: lock it down ---------- */
@@ -598,11 +712,20 @@ function stationLock() {
   app.innerHTML = stationHead(3) +
     '<p class="lead">You broke in twice. Now fix both handlers. Read each version, pick the one you trust, and the station reruns real attacks against it, including the ones that worked for you. Full credit on the first try, half on the second, and a little on the third.</p>' + guide('<p>For each option, ask the three questions below. Then read the results table: <strong>Works</strong> means honest visitors still get in, and <strong>Blocked</strong> means the attack failed. A safe version must block every attack <em>and</em> keep working for honest visitors.</p>' + CHECK3) +
     '<section class="card" id="partA"></section><section class="card" id="partB"></section>' + finishBar(3);
-  function check() { if (pts[0] !== null && pts[1] !== null) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'Both handlers are locked down. Finish when you are ready.'; } }
-  fixPart('partA', 'Part 1: the lesson filter', 'Which version of <code>listFeedback</code> stops the leak and still works for honest visitors?', LIST, ['quotes', 'escape', 'fixed'], leakBattery, function (p) { pts[0] = p; check(); });
-  fixPart('partB', 'Part 2: the login', 'Which version of <code>login</code> keeps attackers out and still lets <code>kmarsh</code> in?', LOGIN, ['length', 'blockor', 'fixed'], loginBattery, function (p) { pts[1] = p; check(); });
-  document.getElementById('finish').onclick = function () { done(3, pts[0] + pts[1], 'Lesson filter: ' + pts[0] + ' of 50. Login: ' + pts[1] + ' of 50. Compare the fixed versions with your own Lab 13 feedback.js: same idea, values travel as $1.'); };
-  wireBack(); focusTop();
+  fixPart('partA', 'Part 1: the lesson filter', 'Which version of <code>listFeedback</code> stops the leak and still works for honest visitors?', LIST, ['quotes', 'escape', 'fixed'], leakBattery, function (p) { pts[0] = p; });
+  fixPart('partB', 'Part 2: the login', 'Which version of <code>login</code> keeps attackers out and still lets <code>kmarsh</code> in?', LOGIN, ['length', 'blockor', 'fixed'], loginBattery, function (p) { pts[1] = p; });
+  track(3, function () {
+    var a = pts[0] || 0, b = pts[1] || 0;
+    return {
+      pct: a + b,
+      detail: 'Lesson filter: ' + a + ' of 50. Login: ' + b + ' of 50. Compare the fixed versions with your own Lab 13 feedback.js: same idea, values travel as $1.',
+      items: [
+        { t: 'Part 1: pick the safe lesson filter', done: pts[0] !== null, go: 'partA' },
+        { t: 'Part 2: pick the safe login', done: pts[1] !== null, go: 'partB' }
+      ]
+    };
+  });
+  focusTop();
 }
 
 /* ---------- station 5: spot the hole ---------- */
@@ -620,7 +743,7 @@ var SNIPS = [
 function stationSpot() {
   var ai = shuffle(SNIPS.filter(function (s) { return s.ai; }))[0];
   var rest = shuffle(SNIPS.filter(function (s) { return s !== ai && !s.ai; })).slice(0, 5);
-  var set = shuffle([ai].concat(rest)), answered = 0, right = 0;
+  var set = shuffle([ai].concat(rest)), answered = 0, right = 0, judged = [];
   app.innerHTML = stationHead(4) +
     '<p class="lead">Six snippets of Express and pg code. Decide whether each one is safe from SQL injection. At least one was written by an AI assistant that says it is fine. Your first answer to each one counts.</p>' + guide(CHECK3 + '<p>A template literal or <code>+</code> is only dangerous when it puts <strong>visitor input</strong> into the SQL. Ask where each value came from: the visitor (<code>req.query</code>, <code>req.params</code>, <code>req.body</code>) or the programmer.</p>') +
     set.map(function (s, k) {
@@ -632,19 +755,25 @@ function stationSpot() {
       b.onclick = function () {
         var said = b.dataset.a === 'safe', ok = said === s.safe;
         if (ok) { right++; }
-        answered++;
+        answered++; judged[k] = true;
         btns.forEach(function (x) {
           x.disabled = true; var isAns = (x.dataset.a === 'safe') === s.safe;
           if (isAns) { x.classList.add('right'); x.insertAdjacentHTML('beforeend', '<span class="why">Correct answer</span>'); }
           else if (x === b) { x.classList.add('wrong'); x.insertAdjacentHTML('beforeend', '<span class="why">Your answer</span>'); }
         });
         box.querySelector('.qfb').innerHTML = '<div class="fb ' + (ok ? 'ok' : 'no') + '"><strong class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Correct.' : 'Not quite.') + ' This code is ' + (s.safe ? 'SAFE' : 'UNSAFE') + '.</strong> ' + s.e + '</div>';
-        if (answered === set.length) { document.getElementById('finish').disabled = false; document.getElementById('finishnote').textContent = 'All six answered. Finish when you are ready.'; }
       };
     });
   });
-  document.getElementById('finish').onclick = function () { done(4, right / set.length * 100, right + ' of 6 snippets judged correctly.'); };
-  wireBack(); focusTop();
+  track(4, function () {
+    var k = 0; while (judged[k]) { k++; }
+    return {
+      pct: right / set.length * 100,
+      detail: right + ' of ' + set.length + ' snippets judged correctly.',
+      items: [{ t: 'Judge all six snippets as safe or unsafe', note: answered + ' of ' + set.length + ' judged', done: answered === set.length, go: 'sp' + Math.min(k, set.length - 1) }]
+    };
+  });
+  focusTop();
 }
 
 var STATION_FN = [stationRecon, function () { attackStation(1); }, function () { attackStation(2); }, stationLock, stationSpot];
